@@ -74,6 +74,8 @@ pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
     hash: u64,
+    pub captured_black: usize,
+    pub captured_white: usize,
 }
 
 impl Board {
@@ -82,6 +84,8 @@ impl Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
             hash: 0,
+            captured_black: 0,
+            captured_white: 0,
         }
     }
 }

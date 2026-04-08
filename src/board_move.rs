@@ -128,29 +128,6 @@ impl Board {
 }
 
 impl Board {
-    // fn create_tab_i(lst_tab: SmallVec<[u8; 4]>, x: usize, y: usize, dx: i32, dy: i32) -> SmallVec<[u8; 6]> {
-    //     let mut tab: SmallVec<[u8; 9]> = SmallVec::new();
-    //     bool empty_before = false;
-    //     for i in lst_tab {
-    //         for j in DOUBLE_THREE_TAB[i as usize] {
-    //             if j != 8 {
-    //                 tab.push(j);
-    //             }
-    //             let nx = x as i32 + j as i32 * dx;
-    //             let ny = y as i32 + j as i32 * dy;
-    //             if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
-    //                 match self.grid[nx as usize][ny as usize] {
-    //                     Cell::Empty => tab.push(0),
-    //                     c if c == cell.get() => tab.push(1),
-    //                     _ => tab.push(8),
-    //                 }
-    //             } else {
-    //                 tab.push(8);
-    //             }
-    //         }
-    //     }
-    // }
-
     #[inline(always)]
     fn match_cell(cell: Cell, curent_cell: Cell, expected: u8) -> bool {
         expected == 0 && cell == Cell::Empty || expected == 1 && cell == curent_cell
@@ -272,13 +249,16 @@ impl Board {
         }
 
         if self.grid[x][y] == Cell::Empty {
-            self.grid[x][y] = new_cell;
             if self.free_trees(x, y, new_cell) {
-                self.grid[x][y] = Cell::Empty;
                 return Err(BoardError::FreeThree);
             }
+            self.grid[x][y] = new_cell;
 
             let captured: SmallVec<[(usize, usize); 4]> = self.capture(x as i32, y as i32, cell);
+            match cell {
+                NonEmptyCell::Black => self.captured_black += captured.len(),
+                NonEmptyCell::White => self.captured_white += captured.len(),
+            }
             for (cx, cy) in &captured {
                 self.grid[*cx][*cy] = Cell::Empty;
             }
@@ -304,6 +284,20 @@ impl Board {
         let x = x as i32;
         let y = y as i32;
         let opposite_cell = cell.get_opposite();
+
+        match cell {
+            NonEmptyCell::Black => {
+                if self.captured_black >= 10 {
+                    return true;
+                }
+            }
+            NonEmptyCell::White => {
+                if self.captured_white >= 10 {
+                    return true;
+                }
+            }
+        }
+
         let cell: Cell = cell.get();
 
         for (dx, dy) in PRIMARY_DIRECTIONS {
