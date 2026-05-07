@@ -12,11 +12,10 @@ pub const OPEN_TWO: i32 = 10;
 pub const HALF_OPEN_TWO: i32 = 5;
 pub const CLOSED_TWO: i32 = 1;
 
-pub const CAPTURE_PAIR: i32 = 20000;
 pub const CAPTURE_THREAT: i32 = 10000;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
-pub enum SCORING_STATE {
+pub enum ScoringState {
     Open,
     HalfOpen,
     Closed,
@@ -24,13 +23,28 @@ pub enum SCORING_STATE {
 
 use std::fmt;
 
-impl fmt::Display for SCORING_STATE {
+impl fmt::Display for ScoringState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            SCORING_STATE::Open => write!(f, "Open"),
-            SCORING_STATE::HalfOpen => write!(f, "HalfOpen"),
-            SCORING_STATE::Closed => write!(f, "Closed"),
+            ScoringState::Open => write!(f, "Open"),
+            ScoringState::HalfOpen => write!(f, "HalfOpen"),
+            ScoringState::Closed => write!(f, "Closed"),
         }
+    }
+}
+
+pub fn capture_score(pairs: usize) -> i32 {
+    match pairs {
+        0 => 0,
+        1 => 10000,
+        2 => 20000,
+        3 => 25000,
+        4 => 50000,
+        5 => 100000,
+        6 => 100000,
+        7 => 200000,
+        8 => 300000,
+        _ => FIVE,
     }
 }
 

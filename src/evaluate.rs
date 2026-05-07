@@ -1,91 +1,89 @@
 use crate::{
     board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
     directions::PRIMARY_DIRECTIONS,
-    scoring::{self, CAPTURE_THREAT, SCORING_TABLE},
+    scoring::{self, CAPTURE_THREAT, SCORING_TABLE, capture_score},
 };
+
+pub fn count_direction_evaluate(
+    grid: &[[Cell; BOARD_SIZE]; BOARD_SIZE],
+    x: usize,
+    y: usize,
+    dx: i32,
+    dy: i32,
+    cell: Cell,
+    opposite_cell: Cell,
+) -> i32 {
+    if grid[x][y] != cell {
+        return 0;
+    }
+
+    let x_1 = x as i32 - dx;
+    let y_1 = y as i32 - dy;
+    let mut cell_start: Cell = cell;
+
+    if x_1 < BOARD_SIZE as i32 && y_1 < BOARD_SIZE as i32 && x_1 >= 0 && y_1 >= 0 {
+        if grid[x_1 as usize][y_1 as usize] == cell {
+            return 0;
+        }
+        cell_start = grid[x_1 as usize][y_1 as usize];
+    }
+
+    let mut count = 0;
+    let mut cell_end: Cell = cell;
+
+    let mut x = x as i32 + dx;
+    let mut y = y as i32 + dy;
+    while x < BOARD_SIZE as i32 && y < BOARD_SIZE as i32 && x >= 0 && y >= 0 {
+        if grid[x as usize][y as usize] == cell {
+            count += 1;
+        } else {
+            cell_end = grid[x as usize][y as usize];
+            break;
+        }
+        x = x as i32 + dx;
+        y = y as i32 + dy;
+    }
+
+    let scoring_state;
+    match cell_start {
+        Cell::Empty => {
+            if cell_end == Cell::Empty {
+                scoring_state = scoring::ScoringState::Open;
+            } else {
+                if cell_end == opposite_cell && count == 2 {
+                    return -CAPTURE_THREAT;
+                }
+                scoring_state = scoring::ScoringState::HalfOpen;
+            }
+        }
+        other => {
+            if cell_end == Cell::Empty {
+                if other == opposite_cell && count == 2 {
+                    return -CAPTURE_THREAT;
+                }
+                scoring_state = scoring::ScoringState::HalfOpen;
+            } else {
+                scoring_state = scoring::ScoringState::Closed;
+            }
+        }
+    }
+    SCORING_TABLE[count as usize][scoring_state as usize]
+}
 
 impl Board {
     pub fn evaluate(&self, cell: NonEmptyCell) -> i32 {
-        fn count_direction_evaluate(
-            grid: &[[Cell; BOARD_SIZE]; BOARD_SIZE],
-            mut x: usize,
-            mut y: usize,
-            dx: i32,
-            dy: i32,
-            cell: Cell,
-            opposite_cell: Cell,
-        ) -> i32 {
-            if grid[x][y] != cell {
-                return 0;
-            }
-
-            let x_1 = x - dx as usize;
-            let y_1 = y - dy as usize;
-            let mut cell_start: Cell = cell;
-
-            if x_1 < BOARD_SIZE && y_1 < BOARD_SIZE && x_1 >= 0 && y_1 >= 0 {
-                if grid[x_1][y_1] == cell {
-                    return 0;
-                }
-                cell_start = grid[x_1][y_1];
-            }
-
-            let mut count = 0;
-            let mut cell_end: Cell = cell;
-
-            while x < BOARD_SIZE && y < BOARD_SIZE && x >= 0 && y >= 0 {
-                if grid[x][y] == cell {
-                    count += 1;
-                } else {
-                    cell_end = grid[x][y];
-                    break;
-                }
-                x = (x as i32 + dx) as usize;
-                y = (y as i32 + dy) as usize;
-            }
-
-            let scoring_state;
-            match cell_start {
-                Cell::Empty => {
-                    if cell_end == Cell::Empty {
-                        scoring_state = scoring::SCORING_STATE::Open;
-                    } else {
-                        if cell_end == opposite_cell && count == 2 {
-                            return -CAPTURE_THREAT;
-                        }
-                        scoring_state = scoring::SCORING_STATE::HalfOpen;
-                    }
-                }
-                other => {
-                    if cell_end == Cell::Empty {
-                        if other == opposite_cell && count == 2 {
-                            return -CAPTURE_THREAT;
-                        }
-                        scoring_state = scoring::SCORING_STATE::HalfOpen;
-                    } else {
-                        scoring_state = scoring::SCORING_STATE::Closed;
-                    }
-                }
-            }
-            println!("Count: {}, Scoring State: {:?}", count, scoring_state);
-            SCORING_TABLE[count - 1 as usize][scoring_state as usize]
-        }
-        let opposite_cell = cell.get_opposite();
-
+        let opposite_cell = cell.get_opposite_non_empty();
+        println!("cell as usize: {}", cell as usize);
+        println!("opposite_cell as usize: {}", opposite_cell as usize);
+        let mut count = capture_score(self.captured[cell as usize])
+            - capture_score(self.captured[opposite_cell as usize]);
         let cell: Cell = cell.get();
-        let mut count = 0;
+        let opposite_cell = opposite_cell.get();
 
-        for one_move in self.moves.iter() {
+        for coo in self.available_moves_active.keys() {
             for (dx, dy) in PRIMARY_DIRECTIONS {
-                count += count_direction_evaluate(
-                    &self.grid,
-                    one_move.x,
-                    one_move.y,
-                    dx,
-                    dy,
-                    cell,
-                    opposite_cell,
-                );
+                count +=
+                    count_direction_evaluate(&self.grid, coo.0, coo.1, dx, dy, cell, opposite_cell);
             }
         }
         count

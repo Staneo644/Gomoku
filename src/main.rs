@@ -2,6 +2,7 @@ mod board;
 mod board_move;
 mod directions;
 mod evaluate;
+mod move_ordering;
 mod scoring;
 use board::{Board, NonEmptyCell};
 
@@ -14,6 +15,9 @@ pub fn main() {
     println!("{}", test.set_and_check(3, 2, NonEmptyCell::White));
     println!("{}", test.evaluate(NonEmptyCell::White));
     println!("{}", test.evaluate(NonEmptyCell::Black));
-
+    let moves = test.move_ordering(NonEmptyCell::White);
+    for (x, y, score) in moves {
+        println!("({}, {}): {}", x, y, score);
+    }
     println!("{}", test);
 }

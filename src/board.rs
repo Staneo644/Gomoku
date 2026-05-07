@@ -1,5 +1,5 @@
 use smallvec::SmallVec;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 pub const BOARD_SIZE: usize = 19;
 
 #[derive(Copy, Clone, PartialEq)]
@@ -41,6 +41,13 @@ impl NonEmptyCell {
             NonEmptyCell::White => Cell::Black,
         }
     }
+
+    pub fn get_opposite_non_empty(&self) -> NonEmptyCell {
+        match self {
+            NonEmptyCell::Black => NonEmptyCell::White,
+            NonEmptyCell::White => NonEmptyCell::Black,
+        }
+    }
 }
 
 impl fmt::Display for NonEmptyCell {
@@ -74,8 +81,9 @@ pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
     hash: u64,
-    pub captured_black: usize,
-    pub captured_white: usize,
+    pub captured: [usize; 2],
+    pub available_moves_empty: HashMap<(usize, usize), usize>,
+    pub available_moves_active: HashMap<(usize, usize), usize>,
 }
 
 impl Board {
@@ -84,8 +92,9 @@ impl Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
             hash: 0,
-            captured_black: 0,
-            captured_white: 0,
+            captured: [0; 2],
+            available_moves_empty: HashMap::new(),
+            available_moves_active: HashMap::new(),
         }
     }
 }

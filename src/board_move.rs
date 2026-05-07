@@ -19,17 +19,17 @@ impl Board {
                 match self.grid[mov.x][mov.y] {
                     Cell::Black => {
                         for captured in mov.captured {
-                            self.grid[captured.0][captured.1] = Cell::White;
+                            self.add_element(captured.0, captured.1, NonEmptyCell::White);
                         }
                     }
                     Cell::White => {
                         for captured in mov.captured {
-                            self.grid[captured.0][captured.1] = Cell::White;
+                            self.add_element(captured.0, captured.1, NonEmptyCell::Black);
                         }
                     }
                     _ => (),
                 }
-                self.grid[mov.x][mov.y] = Cell::Empty;
+                self.delete_element(mov.x, mov.y);
                 Ok(())
             }
         }
@@ -101,6 +101,79 @@ impl Board {
             ny += dy;
         }
         count
+    }
+}
+
+impl Board {
+    pub fn delete_element(&mut self, x: usize, y: usize) {
+        self.grid[x][y] = Cell::Empty;
+        let val = self
+            .available_moves_active
+            .remove(&(x, y))
+            .expect("available_moves inconsistency: removing non-existent cell");
+
+        self.available_moves_empty.insert((x, y), val);
+
+        for i in -2..2 {
+            for j in -2..2 {
+                let nx = x as i32 + i;
+                let ny = y as i32 + j;
+                if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
+                    if self.grid[nx as usize][ny as usize] == Cell::Empty {
+                        let v = self
+                            .available_moves_empty
+                            .get_mut(&(nx as usize, ny as usize))
+                            .expect("available_moves inconsistency: removing non-existent cell");
+                        *v -= 1;
+
+                        if *v == 0 {
+                            self.available_moves_empty
+                                .remove(&(nx as usize, ny as usize));
+                        }
+                    } else {
+                        let v = self
+                            .available_moves_active
+                            .get_mut(&(nx as usize, ny as usize))
+                            .expect("available_moves inconsistency: removing non-existent cell");
+                        *v -= 1;
+
+                        if *v == 0 {
+                            self.available_moves_active
+                                .remove(&(nx as usize, ny as usize));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Board {
+    pub fn add_element(&mut self, x: usize, y: usize, cell: NonEmptyCell) {
+        self.grid[x][y] = cell.get();
+        let val = self.available_moves_empty.remove(&(x, y)).unwrap_or(0);
+
+        self.available_moves_active.insert((x, y), val);
+
+        for i in -2..2 {
+            for j in -2..2 {
+                let nx = x as i32 + i;
+                let ny = y as i32 + j;
+                if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
+                    if self.grid[nx as usize][ny as usize] == Cell::Empty {
+                        *self
+                            .available_moves_empty
+                            .entry((nx as usize, ny as usize))
+                            .or_insert(0) += 1;
+                    } else {
+                        *self
+                            .available_moves_active
+                            .entry((nx as usize, ny as usize))
+                            .or_insert(0) += 1;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -252,21 +325,14 @@ impl Board {
             if self.free_trees(x, y, new_cell) {
                 return Err(BoardError::FreeThree);
             }
-            self.grid[x][y] = new_cell;
+
+            self.add_element(x, y, cell);
 
             let captured: SmallVec<[(usize, usize); 4]> = self.capture(x as i32, y as i32, cell);
-            match cell {
-                NonEmptyCell::Black => self.captured_black += captured.len(),
-                NonEmptyCell::White => self.captured_white += captured.len(),
-            }
+            self.captured[cell as usize] += captured.len();
             for (cx, cy) in &captured {
-                self.grid[*cx][*cy] = Cell::Empty;
+                self.delete_element(*cx, *cy);
             }
-            print!("Captured: ");
-            for (cx, cy) in &captured {
-                print!("({}, {}) ", cx, cy);
-            }
-            println!();
             self.moves.push(Move {
                 x,
                 y,
@@ -285,17 +351,8 @@ impl Board {
         let y = y as i32;
         let opposite_cell = cell.get_opposite();
 
-        match cell {
-            NonEmptyCell::Black => {
-                if self.captured_black >= 10 {
-                    return true;
-                }
-            }
-            NonEmptyCell::White => {
-                if self.captured_white >= 10 {
-                    return true;
-                }
-            }
+        if self.captured[cell as usize] >= 10 {
+            return true;
         }
 
         let cell: Cell = cell.get();
