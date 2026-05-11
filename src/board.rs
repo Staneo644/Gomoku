@@ -86,6 +86,7 @@ pub struct Board {
     pub neighboring_empty_cells: HashMap<(usize, usize), usize>,
     // key: (x, y), value: number of neighboring pieces
     pub occupied_positions: HashMap<(usize, usize), usize>,
+	pub player_to_move: NonEmptyCell,
 }
 
 impl Board {
@@ -94,6 +95,7 @@ impl Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
             hash: 0,
+			player_to_move: NonEmptyCell::White,
             captured_by_user: [0; 2],
             neighboring_empty_cells: HashMap::new(),
             occupied_positions: HashMap::new(),
