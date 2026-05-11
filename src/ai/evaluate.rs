@@ -67,14 +67,15 @@ pub fn count_direction_evaluate(
             }
         }
     }
+    if count > 4 {
+        return scoring::FIVE;
+    }
     SCORING_TABLE[count as usize][scoring_state as usize]
 }
 
 impl Board {
     pub fn evaluate(&self, cell: NonEmptyCell) -> i32 {
         let opposite_cell = cell.get_opposite_non_empty();
-        println!("cell as usize: {}", cell as usize);
-        println!("opposite_cell as usize: {}", opposite_cell as usize);
         let mut count = capture_score(self.captured_by_user[cell as usize])
             - capture_score(self.captured_by_user[opposite_cell as usize]);
         let cell: Cell = cell.get();

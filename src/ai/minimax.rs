@@ -1,19 +1,15 @@
-use crate::{
-    ai::move_ordering,
-    board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
-    directions::PRIMARY_DIRECTIONS,
-};
+use crate::board::{Board, NonEmptyCell};
 
 struct MoveWithScore {
     position: (usize, usize),
     score: i32,
 }
 
-pub fn final_eval(board: &Board, cell: NonEmptyCell) -> i32 {
+fn final_eval(board: &Board, cell: NonEmptyCell) -> i32 {
     board.evaluate(cell) - board.evaluate(cell.get_opposite_non_empty())
 }
 
-pub fn minimax(
+fn minimax(
     board: &mut Board,
     depth: i32,
     is_maximizing: bool,
@@ -40,6 +36,7 @@ pub fn minimax(
             match board.set_and_check(x, y, cell) {
                 Err(_) => continue,
                 Ok(true) => {
+                    let _ = board.unset();
                     return MoveWithScore {
                         position: (x, y),
                         score: super::scoring::FIVE,
@@ -54,7 +51,7 @@ pub fn minimax(
                         };
                     }
                     i += 1;
-                    board.unset();
+                    let _ = board.unset();
                 }
             }
         }
@@ -73,6 +70,7 @@ pub fn minimax(
             match board.set_and_check(x, y, cell) {
                 Err(_) => continue,
                 Ok(true) => {
+                    let _ = board.unset();
                     return MoveWithScore {
                         position: (x, y),
                         score: -super::scoring::FIVE,
@@ -87,7 +85,7 @@ pub fn minimax(
                         };
                     }
                     i += 1;
-                    board.unset();
+                    let _ = board.unset();
                 }
             }
         }

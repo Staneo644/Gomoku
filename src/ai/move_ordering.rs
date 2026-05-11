@@ -67,6 +67,9 @@ pub fn count_direction_move_ordering(
             }
         }
     }
+    if count >= 5 {
+        return scoring::FIVE;
+    }
     SCORING_TABLE[count as usize][scoring_state as usize]
 }
 

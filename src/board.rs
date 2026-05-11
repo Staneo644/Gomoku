@@ -80,7 +80,6 @@ impl fmt::Display for Move {
 pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
-    hash: u64,
     pub captured_by_user: [usize; 2],
     // key: (x, y), value: number of neighboring pieces
     pub neighboring_empty_cells: HashMap<(usize, usize), usize>,
@@ -93,7 +92,6 @@ impl Board {
         Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
-            hash: 0,
             captured_by_user: [0; 2],
             neighboring_empty_cells: HashMap::new(),
             occupied_positions: HashMap::new(),
