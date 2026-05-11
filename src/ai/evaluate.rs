@@ -1,7 +1,7 @@
+use super::scoring::{self, CAPTURE_THREAT, SCORING_TABLE, capture_score};
 use crate::{
     board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
     directions::PRIMARY_DIRECTIONS,
-    scoring::{self, CAPTURE_THREAT, SCORING_TABLE, capture_score},
 };
 
 pub fn count_direction_evaluate(
@@ -75,12 +75,12 @@ impl Board {
         let opposite_cell = cell.get_opposite_non_empty();
         println!("cell as usize: {}", cell as usize);
         println!("opposite_cell as usize: {}", opposite_cell as usize);
-        let mut count = capture_score(self.captured[cell as usize])
-            - capture_score(self.captured[opposite_cell as usize]);
+        let mut count = capture_score(self.captured_by_user[cell as usize])
+            - capture_score(self.captured_by_user[opposite_cell as usize]);
         let cell: Cell = cell.get();
         let opposite_cell = opposite_cell.get();
 
-        for coo in self.available_moves_active.keys() {
+        for coo in self.occupied_positions.keys() {
             for (dx, dy) in PRIMARY_DIRECTIONS {
                 count +=
                     count_direction_evaluate(&self.grid, coo.0, coo.1, dx, dy, cell, opposite_cell);

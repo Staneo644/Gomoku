@@ -1,9 +1,7 @@
+mod ai;
 mod board;
 mod board_move;
 mod directions;
-mod evaluate;
-mod move_ordering;
-mod scoring;
 use board::{Board, NonEmptyCell};
 
 pub fn main() {

@@ -81,9 +81,11 @@ pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
     hash: u64,
-    pub captured: [usize; 2],
-    pub available_moves_empty: HashMap<(usize, usize), usize>,
-    pub available_moves_active: HashMap<(usize, usize), usize>,
+    pub captured_by_user: [usize; 2],
+    // key: (x, y), value: number of neighboring pieces
+    pub neighboring_empty_cells: HashMap<(usize, usize), usize>,
+    // key: (x, y), value: number of neighboring pieces
+    pub occupied_positions: HashMap<(usize, usize), usize>,
 }
 
 impl Board {
@@ -92,9 +94,9 @@ impl Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
             hash: 0,
-            captured: [0; 2],
-            available_moves_empty: HashMap::new(),
-            available_moves_active: HashMap::new(),
+            captured_by_user: [0; 2],
+            neighboring_empty_cells: HashMap::new(),
+            occupied_positions: HashMap::new(),
         }
     }
 }

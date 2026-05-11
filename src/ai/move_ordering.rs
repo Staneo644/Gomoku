@@ -1,7 +1,7 @@
+use super::scoring::{self, CAPTURE_THREAT, SCORING_TABLE};
 use crate::{
     board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
     directions::PRIMARY_DIRECTIONS,
-    scoring::{self, CAPTURE_THREAT, SCORING_TABLE},
 };
 
 pub fn count_direction_move_ordering(
@@ -74,7 +74,7 @@ impl Board {
     pub fn move_ordering(&self, cell: NonEmptyCell) -> Vec<(usize, usize, i32)> {
         let mut moves = Vec::new();
         let mut count;
-        for coo in self.available_moves_empty.keys() {
+        for coo in self.neighboring_empty_cells.keys() {
             count = 0;
             for (dx, dy) in PRIMARY_DIRECTIONS {
                 count += count_direction_move_ordering(

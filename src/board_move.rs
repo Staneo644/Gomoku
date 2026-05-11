@@ -105,14 +105,14 @@ impl Board {
 }
 
 impl Board {
-    pub fn delete_element(&mut self, x: usize, y: usize) {
+    fn delete_element(&mut self, x: usize, y: usize) {
         self.grid[x][y] = Cell::Empty;
         let val = self
-            .available_moves_active
+            .occupied_positions
             .remove(&(x, y))
             .expect("available_moves inconsistency: removing non-existent cell");
 
-        self.available_moves_empty.insert((x, y), val);
+        self.neighboring_empty_cells.insert((x, y), val);
 
         for i in -2..2 {
             for j in -2..2 {
@@ -121,25 +121,24 @@ impl Board {
                 if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
                     if self.grid[nx as usize][ny as usize] == Cell::Empty {
                         let v = self
-                            .available_moves_empty
+                            .neighboring_empty_cells
                             .get_mut(&(nx as usize, ny as usize))
                             .expect("available_moves inconsistency: removing non-existent cell");
                         *v -= 1;
 
                         if *v == 0 {
-                            self.available_moves_empty
+                            self.neighboring_empty_cells
                                 .remove(&(nx as usize, ny as usize));
                         }
                     } else {
                         let v = self
-                            .available_moves_active
+                            .occupied_positions
                             .get_mut(&(nx as usize, ny as usize))
                             .expect("available_moves inconsistency: removing non-existent cell");
                         *v -= 1;
 
                         if *v == 0 {
-                            self.available_moves_active
-                                .remove(&(nx as usize, ny as usize));
+                            self.occupied_positions.remove(&(nx as usize, ny as usize));
                         }
                     }
                 }
@@ -149,11 +148,11 @@ impl Board {
 }
 
 impl Board {
-    pub fn add_element(&mut self, x: usize, y: usize, cell: NonEmptyCell) {
+    fn add_element(&mut self, x: usize, y: usize, cell: NonEmptyCell) {
         self.grid[x][y] = cell.get();
-        let val = self.available_moves_empty.remove(&(x, y)).unwrap_or(0);
+        let val = self.neighboring_empty_cells.remove(&(x, y)).unwrap_or(0);
 
-        self.available_moves_active.insert((x, y), val);
+        self.occupied_positions.insert((x, y), val);
 
         for i in -2..2 {
             for j in -2..2 {
@@ -162,12 +161,12 @@ impl Board {
                 if nx >= 0 && nx < BOARD_SIZE as i32 && ny >= 0 && ny < BOARD_SIZE as i32 {
                     if self.grid[nx as usize][ny as usize] == Cell::Empty {
                         *self
-                            .available_moves_empty
+                            .neighboring_empty_cells
                             .entry((nx as usize, ny as usize))
                             .or_insert(0) += 1;
                     } else {
                         *self
-                            .available_moves_active
+                            .occupied_positions
                             .entry((nx as usize, ny as usize))
                             .or_insert(0) += 1;
                     }
@@ -329,7 +328,7 @@ impl Board {
             self.add_element(x, y, cell);
 
             let captured: SmallVec<[(usize, usize); 4]> = self.capture(x as i32, y as i32, cell);
-            self.captured[cell as usize] += captured.len();
+            self.captured_by_user[cell as usize] += captured.len();
             for (cx, cy) in &captured {
                 self.delete_element(*cx, *cy);
             }
@@ -351,7 +350,7 @@ impl Board {
         let y = y as i32;
         let opposite_cell = cell.get_opposite();
 
-        if self.captured[cell as usize] >= 10 {
+        if self.captured_by_user[cell as usize] >= 10 {
             return true;
         }
 
