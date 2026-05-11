@@ -371,12 +371,17 @@ impl Board {
 }
 
 impl Board {
-    pub fn set_and_check(&mut self, x: usize, y: usize, cell: NonEmptyCell) -> bool {
+    pub fn set_and_check(
+        &mut self,
+        x: usize,
+        y: usize,
+        cell: NonEmptyCell,
+    ) -> Result<(bool), BoardError> {
         match self.set(x, y, cell) {
-            Ok(()) => self.check(x, y, cell),
+            Ok(()) => Ok(self.check(x, y, cell)),
             Err(e) => {
                 println!("Error: {:?}", e);
-                false
+                Err(e)
             }
         }
     }
