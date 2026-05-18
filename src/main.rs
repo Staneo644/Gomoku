@@ -2,6 +2,7 @@ mod ai;
 mod board;
 mod board_move;
 mod directions;
+mod transposition_table;
 // use ai::minimax::ia_move;
 use board::{Board, NonEmptyCell};
 

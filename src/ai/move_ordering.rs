@@ -24,7 +24,7 @@ pub fn count_direction_move_ordering(
         if grid[x1 as usize][y1 as usize] == cell {
             count += 1;
         } else {
-            cell_end = grid[x as usize][y as usize];
+            cell_end = grid[x1 as usize][y1 as usize];
             break;
         }
         x1 = x1 as i32 + dx;
@@ -38,7 +38,7 @@ pub fn count_direction_move_ordering(
         if grid[x1 as usize][y1 as usize] == cell {
             count += 1;
         } else {
-            cell_start = grid[x as usize][y as usize];
+            cell_start = grid[x1 as usize][y1 as usize];
             break;
         }
         x1 = x1 as i32 - dx;

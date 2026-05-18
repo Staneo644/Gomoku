@@ -1,5 +1,7 @@
 use crate::board::{Board, NonEmptyCell};
 
+const CELLS_TO_CHECK: usize = 3;
+const OPPOSITE_CELL_TO_CHECK: usize = 2;
 struct MoveWithScore {
     position: (usize, usize),
     score: i32,
@@ -22,75 +24,42 @@ fn minimax(
         };
     }
 
-    if is_maximizing {
-        let mut max_eval = MoveWithScore {
-            position: (0, 0),
-            score: i32::MIN,
-        };
-        let best_move = board.move_ordering(cell);
-        let mut i = 0;
-        for (x, y, _) in best_move {
-            if i >= 3 {
-                break;
+    let mut best_eval = MoveWithScore {
+        position: (0, 0),
+        score: if is_maximizing { i32::MIN } else { i32::MAX },
+    };
+    let best_move = board.move_ordering(cell);
+    let best_opposite_move = board.move_ordering(cell.get_opposite_non_empty());
+    let mut i = 0;
+    for (x, y, _) in best_move {
+        if i >= CELLS_TO_CHECK {
+            break;
+        }
+        match board.set_and_check(x, y, cell) {
+            Err(_) => continue,
+            Ok(true) => {
+                let _ = board.unset();
+                return MoveWithScore {
+                    position: (x, y),
+                    score: super::scoring::FIVE,
+                };
             }
-            match board.set_and_check(x, y, cell) {
-                Err(_) => continue,
-                Ok(true) => {
-                    let _ = board.unset();
-                    return MoveWithScore {
+            Ok(false) => {
+                let current_move = minimax(board, depth - 1, !is_maximizing, cell);
+                if (is_maximizing && current_move.score > best_eval.score)
+                    || (!is_maximizing && current_move.score < best_eval.score)
+                {
+                    best_eval = MoveWithScore {
                         position: (x, y),
-                        score: super::scoring::FIVE,
+                        score: current_move.score,
                     };
                 }
-                Ok(false) => {
-                    let current_move = minimax(board, depth - 1, !is_maximizing, cell);
-                    if current_move.score > max_eval.score {
-                        max_eval = MoveWithScore {
-                            position: (x, y),
-                            score: current_move.score,
-                        };
-                    }
-                    i += 1;
-                    let _ = board.unset();
-                }
+                i += 1;
+                let _ = board.unset();
             }
         }
-        max_eval
-    } else {
-        let mut min_eval = MoveWithScore {
-            position: (0, 0),
-            score: i32::MAX,
-        };
-        let best_move = board.move_ordering(cell);
-        let mut i = 0;
-        for (x, y, _) in best_move {
-            if i >= 3 {
-                break;
-            }
-            match board.set_and_check(x, y, cell) {
-                Err(_) => continue,
-                Ok(true) => {
-                    let _ = board.unset();
-                    return MoveWithScore {
-                        position: (x, y),
-                        score: -super::scoring::FIVE,
-                    };
-                }
-                Ok(false) => {
-                    let current_move = minimax(board, depth - 1, !is_maximizing, cell);
-                    if current_move.score < min_eval.score {
-                        min_eval = MoveWithScore {
-                            position: (x, y),
-                            score: current_move.score,
-                        };
-                    }
-                    i += 1;
-                    let _ = board.unset();
-                }
-            }
-        }
-        min_eval
     }
+    best_eval
 }
 
 pub fn ia_move(board: &mut Board, cell: NonEmptyCell) -> (usize, usize) {
