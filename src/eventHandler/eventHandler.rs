@@ -51,6 +51,11 @@ pub async fn event_handler(game: &mut Game) {
 			println!("Mouse released at: ({}, {})", x, y);
 			// selct menu item
 		}
+		if game.game_state == GameState::Playing {
+			if is_key_pressed(KeyCode::R){
+				game.reset();
+			}
+		}
 		// next_frame().await;
 	// }
 }
