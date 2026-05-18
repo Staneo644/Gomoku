@@ -1,4 +1,10 @@
-pub mod board;
-pub mod display_board;
-pub mod display_message;
+pub mod ai;
+pub mod display;
 pub mod eventHandler;
+pub mod board;
+pub mod board_move;
+pub mod directions;
+pub mod game;
+pub mod main;
+pub mod utils;
+// pub mod menu;

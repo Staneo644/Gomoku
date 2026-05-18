@@ -1,6 +1,7 @@
 use crate::board::{BOARD_SIZE, Board, Cell, Move, NonEmptyCell};
 use crate::directions::{ALL_DIRECTIONS, DOUBLE_THREE_TAB, PRIMARY_DIRECTIONS};
 use smallvec::SmallVec;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum BoardError {
@@ -8,6 +9,17 @@ pub enum BoardError {
     OccupiedCell,
     FreeThree,
     BoardEmpty,
+}
+
+impl fmt::Display for BoardError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            BoardError::InvalidMove => write!(f, "Invalid move"),
+            BoardError::OccupiedCell => write!(f, "Cell is occupied"),
+            BoardError::FreeThree => write!(f, "Move creates a free three"),
+            BoardError::BoardEmpty => write!(f, "Board is empty"),
+        }
+    }
 }
 
 impl Board {

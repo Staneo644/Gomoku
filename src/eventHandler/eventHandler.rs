@@ -1,18 +1,56 @@
 use macroquad::{miniquad::EventHandler, prelude::*};
-mod display_board;
-mod board_move;
-mod board;
+use crate::game::*;
+use crate::display::display_message::*;
+use crate::utils::scale_to_resolution;
 
-async fn event_handler(board: &mut board::Board) {
-	while !is_key_down(KeyCode::Escape) {
-		if is_mouse_button_released(MouseButton::Left) {
-			let (x, y) = mouse_position();
-			if board.set_and_check_move(x, y) {
-				place_stone(x, y, player_color(board.player_to_move)).await;
-				board.player_to_move = board.player_to_move.get_opposite_non_empty();
+async fn get_board_coordinates(x: &mut f32, y: &mut f32) -> (usize, usize) {
+	let line_x = screen_width() * 0.1;
+	let line_y = screen_height() * 0.1;
+	let cell_size_x = screen_width() * 0.8 / 18.;
+	let cell_size_y = screen_height() * 0.8 / 18.;
+	let board_x = ((*x - line_x) / cell_size_x + 0.5).floor() as usize;
+	let board_y = ((*y - line_y) / cell_size_y + 0.5).floor() as usize;
+	*x = line_x + (board_x as f32) * cell_size_x + cell_size_x;
+	*y = line_y + (board_y as f32) * cell_size_y + cell_size_y;
+	(board_x, board_y)
+}
+
+pub async fn event_handler(game: &mut Game) {
+		if is_key_pressed(KeyCode::Escape)
+		{
+			if game.game_state == GameState::Playing {
+				game.game_state = GameState::Paused;
 			}
-			
+			else if game.game_state == GameState::Paused {
+				game.game_state = GameState::Playing;
+			}
 		}
-		next_frame().await;
-	}
+		if is_mouse_button_released(MouseButton::Left) && game.game_state == GameState::Playing {
+			let (mut x, mut y) = mouse_position();
+			if x < screen_width() * 0.075 || x > screen_width() * 0.925 || y < screen_height() * 0.075 || y > screen_height() * 0.925 {
+				game.message = Some(Message::new("Click inside the board".to_string(), MessageType::Error));
+				return;
+			}
+			let (board_x, board_y) = get_board_coordinates(&mut x, &mut y).await;
+			match game.board.set_and_check(board_x, board_y, game.current_player) {
+				Ok(true) => {
+					game.current_player = game.current_player.get_opposite_non_empty();
+					game.game_state = GameState::GameOver;
+				},
+				Ok(false) => {
+					game.current_player = game.current_player.get_opposite_non_empty();
+				},
+				Err(e) => {
+					game.message = Some(Message::new(e.to_string(), MessageType::Error));
+				}
+			}
+			// put_stone_on_board(board_x, board_y, 1);
+		}
+		if is_mouse_button_released(MouseButton::Left) && game.game_state == GameState::Paused {
+			let (mut x, mut y) = mouse_position();
+			println!("Mouse released at: ({}, {})", x, y);
+			// selct menu item
+		}
+		// next_frame().await;
+	// }
 }

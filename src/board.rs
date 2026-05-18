@@ -1,6 +1,7 @@
 use smallvec::SmallVec;
 use std::{collections::HashMap, fmt};
 pub const BOARD_SIZE: usize = 19;
+use macroquad::prelude::*;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Cell {
@@ -86,7 +87,6 @@ pub struct Board {
     pub neighboring_empty_cells: HashMap<(usize, usize), usize>,
     // key: (x, y), value: number of neighboring pieces
     pub occupied_positions: HashMap<(usize, usize), usize>,
-	pub player_to_move: NonEmptyCell,
 }
 
 impl Board {
@@ -95,12 +95,77 @@ impl Board {
             grid: [[Cell::Empty; BOARD_SIZE]; BOARD_SIZE],
             moves: vec![],
             hash: 0,
-			player_to_move: NonEmptyCell::White,
             captured_by_user: [0; 2],
             neighboring_empty_cells: HashMap::new(),
             occupied_positions: HashMap::new(),
         }
     }
+}
+
+impl Board {
+	pub fn draw_board(&self) {
+		clear_background(Color { r: (0.5), g: (0.2), b: (0.2), a: (1.) });
+
+		draw_rectangle(screen_width() * 0.075,screen_height() * 0.075, screen_width() * 0.85, screen_height() * 0.85, BEIGE);
+		let line_thickness = 1.;
+		let first_height_line = screen_height() * 0.1;
+		for i in 0..BOARD_SIZE {
+			draw_line(screen_width() * 0.1,
+			first_height_line + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+			screen_width() * 0.9, 
+			first_height_line + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+			line_thickness, DARKGRAY);}
+		let first_width_line = screen_width() * 0.1;
+		for i in 0..BOARD_SIZE {
+			draw_line(first_width_line + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+				screen_height() * 0.1, 
+				first_width_line + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+				screen_height() * 0.9, 
+				line_thickness, DARKGRAY);}
+		for i in 0..BOARD_SIZE {
+			for j in 0..BOARD_SIZE {
+				let ray;
+				let cell_size = if screen_width() > screen_height() {
+					screen_height() * 0.8 / (BOARD_SIZE - 1) as f32
+				}
+				else {
+					screen_width() * 0.8 / (BOARD_SIZE - 1) as f32
+				};
+				if (i + 3) % 6 == 0 && (j + 3) % 6 == 0 {
+					ray = cell_size * 0.1;
+				}
+				else {
+					ray = cell_size * 0.05;
+				}
+				draw_circle(first_width_line + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+					first_height_line + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (j as f32), 
+					ray, DARKGRAY);
+			}
+		}
+	}
+	pub fn place_stone(&self, x: f32, y: f32, color: Color) {
+		let ray;
+		if screen_width() > screen_height(){
+			ray = screen_height() * 0.8 / (BOARD_SIZE - 1) as f32 / 2. - 2.;}
+		else{
+			ray = screen_width() * 0.8 / (BOARD_SIZE - 1) as f32 / 2. - 2.;}
+		draw_circle(x, y, ray, color);
+	}
+
+	pub fn place_all_stones(&self) {
+		// unsafe {
+			for i in 0..BOARD_SIZE {
+				for j in 0..BOARD_SIZE {
+					if self.grid[i][j] != Cell::Empty {
+						let color = if self.grid[i][j] == Cell::Black { BLACK } else { WHITE };
+						self.place_stone(screen_width() * 0.1 + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32), 
+							screen_height() * 0.1 + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (j as f32), 
+							color);
+					}
+				}
+			}
+		// }
+	}
 }
 
 impl fmt::Display for Board {
