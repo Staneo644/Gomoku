@@ -1,18 +1,18 @@
-use macroquad::{miniquad::EventHandler, prelude::*};
-use crate::game::*;
 use crate::display::display_message::*;
+use crate::game::*;
 use crate::utils::scale_to_resolution;
+use macroquad::{miniquad::EventHandler, prelude::*};
 
 async fn get_board_coordinates(x: &mut f32, y: &mut f32) -> (usize, usize) {
-	let line_x = screen_width() * 0.1;
-	let line_y = screen_height() * 0.1;
-	let cell_size_x = screen_width() * 0.8 / 18.;
-	let cell_size_y = screen_height() * 0.8 / 18.;
-	let board_x = ((*x - line_x) / cell_size_x + 0.5).floor() as usize;
-	let board_y = ((*y - line_y) / cell_size_y + 0.5).floor() as usize;
-	*x = line_x + (board_x as f32) * cell_size_x + cell_size_x;
-	*y = line_y + (board_y as f32) * cell_size_y + cell_size_y;
-	(board_x, board_y)
+    let line_x = screen_width() * 0.1;
+    let line_y = screen_height() * 0.1;
+    let cell_size_x = screen_width() * 0.8 / 18.;
+    let cell_size_y = screen_height() * 0.8 / 18.;
+    let board_x = ((*x - line_x) / cell_size_x + 0.5).floor() as usize;
+    let board_y = ((*y - line_y) / cell_size_y + 0.5).floor() as usize;
+    *x = line_x + (board_x as f32) * cell_size_x + cell_size_x;
+    *y = line_y + (board_y as f32) * cell_size_y + cell_size_y;
+    (board_x, board_y)
 }
 
 pub async fn event_handler(game: &mut Game) {

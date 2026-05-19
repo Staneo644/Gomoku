@@ -1,22 +1,23 @@
-use macroquad::prelude::*;
 use crate::board::{Board, NonEmptyCell};
 use crate::display::display_message::{self, *};
 use crate::utils::scale_to_resolution;
 use crate::eventHandler::eventHandler::*;
+use crate::utils::scale_to_resolution;
+use macroquad::prelude::*;
 
 #[derive(PartialEq)]
 pub enum GameMode {
-	None,
-	HumanVsHuman,
-	HumanVsAI,
-	// insert more modes here
+    None,
+    HumanVsHuman,
+    HumanVsAI,
+    // insert more modes here
 }
 
 #[derive(PartialEq)]
 pub enum GameVariant {
-	None,
-	Standard,
-	// insert more variants here
+    None,
+    Standard,
+    // insert more variants here
 }
 
 #[derive(PartialEq)]
@@ -29,13 +30,13 @@ pub enum GameState {
 }
 
 pub struct Game {
-	pub board: Board,
-	pub current_player: NonEmptyCell,
-	game_mode: GameMode,
-	game_variant: GameVariant,
-	pub game_state: GameState,
-	pub message: Option<Message>,
-	//menu: Menu,
+    pub board: Board,
+    pub current_player: NonEmptyCell,
+    game_mode: GameMode,
+    game_variant: GameVariant,
+    pub game_state: GameState,
+    pub message: Option<Message>,
+    //menu: Menu,
 }
 
 impl Game {
@@ -62,25 +63,51 @@ impl Game {
 
 	}
 
-	pub fn draw_mouse_hover(&self) {
-		if self.game_state != GameState::Playing {
-			return;
-		}
-		let (x, y) = mouse_position();
-		if x < screen_width() * 0.1 || x > screen_width() * 0.9 || y < screen_height() * 0.1 || y > screen_height() * 0.9 {
-			return;
-		}
-		let line_x = screen_width() * 0.1;
-		let line_y = screen_height() * 0.1;
-		let cell_size_x = screen_width() * 0.8 / 18.;
-		let cell_size_y = screen_height() * 0.8 / 18.;
-		let cell_size = if cell_size_x < cell_size_y { cell_size_x } else { cell_size_y };
-		let board_x = ((x - line_x) / cell_size_x - 0.5).floor() + 0.5;
-		let board_y = ((y - line_y) / cell_size_y - 0.5).floor() + 0.5;
-		let color = if self.current_player == NonEmptyCell::Black { Color { r: (0.), g: (0.), b: (0.), a: (0.5) } }
-			else { Color { r: (1.), g: (1.), b: (1.), a: (0.5) } };
-		draw_circle(line_x + (board_x as f32) * cell_size_x + cell_size_x / 2., line_y + (board_y as f32) * cell_size_y + cell_size_y / 2., cell_size / 2. - 2., color);
-	}
+    pub fn draw_mouse_hover(&self) {
+        if self.game_state != GameState::Playing {
+            return;
+        }
+        let (x, y) = mouse_position();
+        if x < screen_width() * 0.1
+            || x > screen_width() * 0.9
+            || y < screen_height() * 0.1
+            || y > screen_height() * 0.9
+        {
+            return;
+        }
+        let line_x = screen_width() * 0.1;
+        let line_y = screen_height() * 0.1;
+        let cell_size_x = screen_width() * 0.8 / 18.;
+        let cell_size_y = screen_height() * 0.8 / 18.;
+        let cell_size = if cell_size_x < cell_size_y {
+            cell_size_x
+        } else {
+            cell_size_y
+        };
+        let board_x = ((x - line_x) / cell_size_x - 0.5).floor() + 0.5;
+        let board_y = ((y - line_y) / cell_size_y - 0.5).floor() + 0.5;
+        let color = if self.current_player == NonEmptyCell::Black {
+            Color {
+                r: (0.),
+                g: (0.),
+                b: (0.),
+                a: (0.5),
+            }
+        } else {
+            Color {
+                r: (1.),
+                g: (1.),
+                b: (1.),
+                a: (0.5),
+            }
+        };
+        draw_circle(
+            line_x + (board_x as f32) * cell_size_x + cell_size_x / 2.,
+            line_y + (board_y as f32) * cell_size_y + cell_size_y / 2.,
+            cell_size / 2. - 2.,
+            color,
+        );
+    }
 
 	fn display_message(&mut self) {
 		if let Some(message) = &mut self.message {
