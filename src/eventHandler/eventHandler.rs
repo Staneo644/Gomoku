@@ -19,9 +19,9 @@ pub async fn event_handler(game: &mut Game) {
 		if is_key_pressed(KeyCode::Escape)
 		{
 			if game.game_state == GameState::Playing {
-				game.game_state = GameState::Paused;
+				game.game_state = GameState::Menu;
 			}
-			else if game.game_state == GameState::Paused {
+			else if game.game_state == GameState::Menu {
 				game.game_state = GameState::Playing;
 			}
 		}
@@ -35,7 +35,7 @@ pub async fn event_handler(game: &mut Game) {
 			match game.board.set_and_check(board_x, board_y, game.current_player) {
 				Ok(true) => {
 					game.current_player = game.current_player.get_opposite_non_empty();
-					game.game_state = GameState::GameOver;
+					game.game_state = GameState::Finished;
 				},
 				Ok(false) => {
 					game.current_player = game.current_player.get_opposite_non_empty();
@@ -46,7 +46,7 @@ pub async fn event_handler(game: &mut Game) {
 			}
 			// put_stone_on_board(board_x, board_y, 1);
 		}
-		if is_mouse_button_released(MouseButton::Left) && game.game_state == GameState::Paused {
+		if is_mouse_button_released(MouseButton::Left) && game.game_state == GameState::Menu {
 			let (mut x, mut y) = mouse_position();
 			println!("Mouse released at: ({}, {})", x, y);
 			// selct menu item
