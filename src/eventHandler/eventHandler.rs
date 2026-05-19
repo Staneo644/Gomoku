@@ -1,7 +1,7 @@
+use crate::ai::minimax::ia_move;
 use crate::display::display_message::*;
 use crate::game::*;
-use crate::utils::scale_to_resolution;
-use macroquad::{miniquad::EventHandler, prelude::*};
+use macroquad::prelude::*;
 
 async fn get_board_coordinates(x: &mut f32, y: &mut f32) -> (usize, usize) {
     let line_x = screen_width() * 0.1;
@@ -46,7 +46,24 @@ pub async fn event_handler(game: &mut Game) {
                 game.game_state = GameState::GameOver;
             }
             Ok(false) => {
-                game.current_player = game.current_player.get_opposite_non_empty();
+                // game.current_player = game.current_player.get_opposite_non_empty();
+
+                let new_move = ia_move(
+                    &mut game.board,
+                    game.current_player.get_opposite_non_empty(),
+                );
+                match game
+                    .board
+                    .set_and_check(new_move.0, new_move.1, game.current_player)
+                {
+                    Ok(true) => {
+                        game.game_state = GameState::GameOver;
+                    }
+                    Ok(false) => {}
+                    Err(e) => {
+                        game.message = Some(Message::new(e.to_string(), MessageType::Error));
+                    }
+                }
             }
             Err(e) => {
                 game.message = Some(Message::new(e.to_string(), MessageType::Error));
@@ -55,7 +72,7 @@ pub async fn event_handler(game: &mut Game) {
         // put_stone_on_board(board_x, board_y, 1);
     }
     if is_mouse_button_released(MouseButton::Left) && game.game_state == GameState::Paused {
-        let (mut x, mut y) = mouse_position();
+        let (x, y) = mouse_position();
         println!("Mouse released at: ({}, {})", x, y);
         // selct menu item
     }

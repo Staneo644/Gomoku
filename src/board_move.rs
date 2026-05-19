@@ -388,7 +388,7 @@ impl Board {
         x: usize,
         y: usize,
         cell: NonEmptyCell,
-    ) -> Result<(bool), BoardError> {
+    ) -> Result<bool, BoardError> {
         match self.set(x, y, cell) {
             Ok(()) => Ok(self.check(x, y, cell)),
             Err(e) => {
