@@ -289,8 +289,8 @@ impl Board {
             }
 
             for i in 0..3 {
-                let nx = x as i32 - (4 + i) * dx;
-                let ny = y as i32 - (4 + i) * dy;
+                let nx = x as i32 + (i - 4) * dx;
+                let ny = y as i32 + (i - 4) * dy;
                 self.match_pattern(&nx, &ny, &i, cell, lst_tab);
             }
 
