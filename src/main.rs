@@ -9,6 +9,8 @@ mod game;
 mod display;
 mod eventHandler;
 mod utils;
+mod menu;
+mod player;
 // mod menu;
 
 #[macroquad::main("Gomoku")]

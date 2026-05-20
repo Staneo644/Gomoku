@@ -8,3 +8,4 @@ pub mod game;
 pub mod main;
 pub mod utils;
 pub mod menu;
+pub mod player;

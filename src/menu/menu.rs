@@ -1,41 +1,64 @@
+use macroquad::miniquad::PassAction;
 use macroquad::{prelude::*};
-use std::collections::BTreeMap;
-use crate::{menu, utils::scale_to_resolution};
+use crate::{game::GameState, menu, utils::scale_to_resolution};
 pub const MENU_WIDTH: f32 = 300.;
 pub const MENU_HEIGHT: f32 = 400.;
-pub const MENU_START_POINT: Vec2 = Vec2::new(400., 300.);
+pub const MENU_START_POINT: Vec2 = Vec2::new(350., 300.);
 pub const MENU_OPTIONS: [&str; 3] = ["NEW GAME", "RESUME GAME", "EXIT"];
 pub const OPTION_HEIGHT: f32 = 50.;
 pub const OPTION_WIDTH: f32 = 250.;
+use crate::game::{Game, GameMode, GameVariant};
+use std::fmt;
 
-struct Menu {
+#[derive(PartialEq, Clone, Copy)]
+pub enum MenuAction {
+    ChangeState(GameState),
+    SetGameMode(GameMode),
+    SetGameVariant(GameVariant),
+}
+
+impl fmt::Display for MenuAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MenuAction::ChangeState(_) => write!(f, "ChangeState"),
+            MenuAction::SetGameMode(_) => write!(f, "SetGameMode"),
+            MenuAction::SetGameVariant(_) => write!(f, "SetGameVariant"),
+        }
+    }
+}
+
+pub struct Menu {
 	options: Vec<MenuOption>,
-	selected_option: i32,
 }
 
 impl Menu {
-	fn new(start_point: Vec2, w: f32, h: f32, options: Vec<String>) -> Self {
+	pub fn new() -> Self {
 		let mut menu = Self {
 			options: Vec::new(),
-			selected_option: -1,
 		};
 
 		let mut index = 0;
 		for name in MENU_OPTIONS {
 			let y_position = MENU_START_POINT.y + 100. + index as f32 * (OPTION_HEIGHT + 10.);
 			let x_position = MENU_START_POINT.x + (MENU_WIDTH - OPTION_WIDTH) / 2.;
-			menu.add_option(name, || {}, (Vec2::new(x_position, y_position), Vec2::new(x_position + OPTION_WIDTH, y_position + OPTION_HEIGHT)));
+			menu.add_option(name.to_string(), (Vec2::new(x_position, y_position), Vec2::new(x_position + OPTION_WIDTH, y_position + OPTION_HEIGHT)));
 			index += 1;
 		}
 
 		menu
 	}
 
-	fn add_option(&mut self, text: String, action: fn(), location: (Vec2, Vec2)) {
-		self.options.push(MenuOption { text, action, location });
+	fn add_option(&mut self, text: String, location: (Vec2, Vec2)) {
+		let action = match text.as_str() {
+			"NEW GAME" => MenuAction::ChangeState((GameState::NewGameMenu)),
+			"RESUME GAME" => MenuAction::ChangeState((GameState::ResumeGame)),
+			"EXIT" => MenuAction::ChangeState((GameState::Exiting)),
+			_ => MenuAction::ChangeState((GameState::MainMenu)), // default case, should not happen
+		};
+		self.options.push(MenuOption::new(text, action, location));
 	}
 
-	fn draw(&self) {
+	pub fn draw(&self) {
 		let menu_to_scale = Vec2::new(scale_to_resolution(MENU_WIDTH), scale_to_resolution(MENU_HEIGHT));
 		let menu_start = Vec2::new(scale_to_resolution(MENU_START_POINT.x), scale_to_resolution(MENU_START_POINT.y));
 		let text_dimensions = measure_text("MENU", None, scale_to_resolution(40.) as u16, 0.8);
@@ -47,21 +70,34 @@ impl Menu {
 			option.draw();
 		}
 	}
+	pub fn click(&self) -> Option<MenuAction> {
+		for option in &self.options {
+			if let Some(menu_action) = option.click() {
+				return Some(menu_action);
+			}
+		}
+		None
+	}
 }
 
-struct MenuOption {
+pub struct MenuOption {
 	text: String,
-	action: fn(),
+	action: MenuAction,
 	location: (Vec2, Vec2),
 }
 
 impl MenuOption {
-	fn is_hovered(&self, mouse_pos: Vec2) -> bool {
+	pub fn new(text: String, action: MenuAction, location: (Vec2, Vec2)) -> Self {
+		Self { text,
+			action: action,
+			location }
+	}
+	pub fn is_hovered(&self, mouse_pos: Vec2) -> bool {
 		let (start, end) = self.location;
 		mouse_pos.x >= start.x && mouse_pos.x <= end.x && mouse_pos.y >= start.y && mouse_pos.y <= end.y
 	}
 
-	fn draw(&self) {
+	pub fn draw(&self) {
 		let color = if self.is_hovered(mouse_position().into()) { LIGHTGRAY } else { GRAY };
 		draw_rectangle(self.location.0.x, self.location.0.y, self.location.1.x - self.location.0.x, self.location.1.y - self.location.0.y, color);
 		let text_size = 20.;
@@ -71,9 +107,11 @@ impl MenuOption {
 		draw_text(&self.text, text_x, text_y, text_size, BLACK);
 	}
 
-	fn click(&self) {
+	pub fn click(&self)  -> Option<MenuAction> {
 		if self.is_hovered(mouse_position().into()) {
-			(self.action)();
+			Some(self.action)
+		} else {
+			None
 		}
 	}
 }
