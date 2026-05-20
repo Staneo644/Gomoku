@@ -1,8 +1,7 @@
 use crate::display::display_message::*;
 use crate::game::{Game, GameMode, GameState, GameVariant};
-use crate::menu::menu::{MenuAction, MenuOption};
-use crate::utils::scale_to_resolution;
-use macroquad::{miniquad::EventHandler, prelude::*};
+use crate::menu::menu::{MenuAction};
+use macroquad::{prelude::*};
 
 async fn get_board_coordinates(x: &mut f32, y: &mut f32) -> (usize, usize) {
     let line_x = screen_width() * 0.1;

@@ -1,13 +1,12 @@
-use macroquad::miniquad::PassAction;
 use macroquad::{prelude::*};
-use crate::{game::GameState, menu, utils::scale_to_resolution};
+use crate::{game::GameState, utils::scale_to_resolution};
 pub const MENU_WIDTH: f32 = 300.;
 pub const MENU_HEIGHT: f32 = 400.;
 pub const MENU_START_POINT: Vec2 = Vec2::new(350., 300.);
 pub const MENU_OPTIONS: [&str; 3] = ["NEW GAME", "RESUME GAME", "EXIT"];
 pub const OPTION_HEIGHT: f32 = 50.;
 pub const OPTION_WIDTH: f32 = 250.;
-use crate::game::{Game, GameMode, GameVariant};
+use crate::game::{GameMode, GameVariant};
 use std::fmt;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -50,10 +49,10 @@ impl Menu {
 
 	fn add_option(&mut self, text: String, location: (Vec2, Vec2)) {
 		let action = match text.as_str() {
-			"NEW GAME" => MenuAction::ChangeState((GameState::NewGameMenu)),
-			"RESUME GAME" => MenuAction::ChangeState((GameState::ResumeGame)),
-			"EXIT" => MenuAction::ChangeState((GameState::Exiting)),
-			_ => MenuAction::ChangeState((GameState::MainMenu)), // default case, should not happen
+			"NEW GAME" => MenuAction::ChangeState(GameState::NewGameMenu),
+			"RESUME GAME" => MenuAction::ChangeState(GameState::ResumeGame),
+			"EXIT" => MenuAction::ChangeState(GameState::Exiting),
+			_ => MenuAction::ChangeState(GameState::MainMenu), // default case, should not happen
 		};
 		self.options.push(MenuOption::new(text, action, location));
 	}
@@ -99,7 +98,11 @@ impl MenuOption {
 
 	pub fn draw(&self) {
 		let color = if self.is_hovered(mouse_position().into()) { LIGHTGRAY } else { GRAY };
-		draw_rectangle(self.location.0.x, self.location.0.y, self.location.1.x - self.location.0.x, self.location.1.y - self.location.0.y, color);
+		draw_rectangle(
+			self.location.0.x,
+			self.location.0.y,
+			self.location.1.x - self.location.0.x,
+			self.location.1.y - self.location.0.y, color);
 		let text_size = 20.;
 		let text_dimensions = measure_text(&self.text, None, text_size as u16, 1.);
 		let text_x = self.location.0.x + (self.location.1.x - self.location.0.x - text_dimensions.width) / 2.;

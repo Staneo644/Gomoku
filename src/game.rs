@@ -1,13 +1,11 @@
 use crate::board::{Board, NonEmptyCell};
-use crate::display::display_message::{self, *};
-use crate::utils::scale_to_resolution;
+use crate::display::display_message::*;
 use crate::eventHandler::eventHandler::*;
 use macroquad::prelude::*;
-use crate::menu::menu::{Menu, MenuOption};
+use crate::menu::menu::{Menu};
 use crate::menu::new_game_menu::NewGameMenu;
 use std::fmt;
 use crate::player::*;
-// use rand::RngExt;
 
 impl fmt::Display for GameMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -226,7 +224,7 @@ impl Game {
 		// insert more adaptations based on game mode and variant here
 		 match self.game_variant {
 			GameVariant::Standard => {
-				let mut rng = rand::gen_range(0, 2);
+				let rng = rand::gen_range(0, 2);
 				if rng == 0 {
 					self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
 					self.current_player = 1;
@@ -246,10 +244,6 @@ impl Game {
 			}
 			GameVariant::None => {
 				// No variant selected, do nothing
-				return;
-			}
-			 // insert more variants here
-			 _ => {
 				return;
 			}
 		}
@@ -278,7 +272,7 @@ impl Game {
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				// Implement AI move logic here, for now we just reset the timer
+				
 				self.ai_timer = 1.0;
 				self.ai_thinking = false;
 			}

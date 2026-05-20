@@ -2,7 +2,6 @@ use smallvec::SmallVec;
 use std::{collections::HashMap, fmt};
 pub const BOARD_SIZE: usize = 19;
 use macroquad::prelude::*;
-use crate::player;
 use crate::utils::scale_to_resolution;
 
 use crate::game::{Game, GameMode, GameVariant};
@@ -149,9 +148,6 @@ impl Board {
 	}
 
 	fn draw_player_counter(&self, player_index: usize, game: &Game) {
-		//draw circle with color of player
-		//write player name
-		//write number of captured pieces
 		let player = &game.players.as_ref().unwrap()[player_index];
 		let color = if player.get_color() == NonEmptyCell::Black {
 			BLACK
@@ -168,7 +164,6 @@ impl Board {
 		let text_dimensions = measure_text(&player.name, None, 20, 1.);
 		draw_text(&player.name, x_position + 40., y_position, 20., BLACK);
 		let captured_text = format!("Captured: {}", self.captured_by_user[player_index]);
-		let captured_text_dimensions = measure_text(&captured_text, None, 20, 1.);
 		draw_text(&captured_text, x_position + 40., y_position + text_dimensions.height, 20., BLACK);
 	}
 
