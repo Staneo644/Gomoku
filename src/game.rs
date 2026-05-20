@@ -69,6 +69,8 @@ pub struct Game {
     pub menu: Menu,
 	pub new_game_menu: NewGameMenu,
 	pub players: Option<[Player; 2]>,
+	pub ai_thinking: bool,
+	pub ai_timer: f32,
 }
 
 impl Game {
@@ -83,6 +85,8 @@ impl Game {
 			menu: Menu::new(),
 			new_game_menu: NewGameMenu::new(),
 			players: None,
+			ai_thinking: false,
+			ai_timer: 1.0,
 		}
 		// display window to pick game mode and variant
 	}
@@ -95,6 +99,8 @@ impl Game {
 		self.game_state = GameState::MainMenu;
 		self.new_game_menu = NewGameMenu::new();
 		self.players = None;
+		self.ai_thinking = false;
+		self.ai_timer = 1.0;
 
 		// display window to pick game mode and variant
 
@@ -193,6 +199,9 @@ impl Game {
 				},
 				_ => {}
 			}
+			if self.is_current_player_ai() {
+				self.ai_move().await;
+			}
 			next_frame().await;
 		}
 	}
@@ -256,5 +265,20 @@ impl Game {
 
 	pub fn is_current_player_ai(&self) -> bool {
 		self.get_current_player().unwrap().is_ai()
+	}
+
+	pub async fn ai_move(&mut self) {
+		if self.ai_thinking {
+			self.ai_timer -= get_frame_time();
+			if self.ai_timer <= 0. {
+				// Implement AI move logic here, for now we just reset the timer
+				self.ai_timer = 1.0;
+				self.ai_thinking = false;
+			}
+		}
+		else {
+			self.ai_thinking = true;
+		}
+
 	}
 }

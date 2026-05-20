@@ -47,7 +47,24 @@ pub fn menu_event_handler(game: &mut Game) {
 	}
 }
 
+pub async fn place_stone_handler(game: &mut Game, board_x: usize, board_y: usize) {
+	match game.board.set_and_check(board_x, board_y, game.players.as_ref().unwrap()[game.current_player].get_color()) {
+		Ok(true) => {
+			game.game_state = GameState::Finished;
+		},
+		Ok(false) => {
+			game.change_player();
+		},
+		Err(e) => {
+			game.message = Some(Message::new(e.to_string(), MessageType::Error));
+		}
+	}
+}
+
 pub async fn mouse_play_event_handler(game: &mut Game) {
+	if game.is_current_player_ai() {
+		return;
+	}
 	if is_mouse_button_released(MouseButton::Left) {
 		let (mut x, mut y) = mouse_position();
 		if x < screen_width() * 0.075 || x > screen_width() * 0.925 || y < screen_height() * 0.075 || y > screen_height() * 0.925 {
@@ -55,17 +72,7 @@ pub async fn mouse_play_event_handler(game: &mut Game) {
 			return;
 		}
 		let (board_x, board_y) = get_board_coordinates(&mut x, &mut y).await;
-		match game.board.set_and_check(board_x, board_y, game.players.as_ref().unwrap()[game.current_player].get_color()) {
-			Ok(true) => {
-				game.game_state = GameState::Finished;
-			},
-			Ok(false) => {
-				game.change_player();
-			},
-			Err(e) => {
-				game.message = Some(Message::new(e.to_string(), MessageType::Error));
-			}
-		}
+		place_stone_handler(game, board_x, board_y).await;
 		// put_stone_on_board(board_x, board_y, 1);
 	}
 }
