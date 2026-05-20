@@ -56,7 +56,9 @@ pub async fn place_stone_handler(game: &mut Game, board_x: usize, board_y: usize
 			game.change_player();
 		},
 		Err(e) => {
-			game.message = Some(Message::new(e.to_string(), MessageType::Error));
+			if !game.is_current_player_ai() {
+				game.message = Some(Message::new(e.to_string(), MessageType::Error));
+			}
 		}
 	}
 }
