@@ -2,19 +2,20 @@ mod ai;
 mod board;
 mod board_move;
 mod directions;
+mod transposition_table;
 // use ai::minimax::ia_move;
 use board::{Board, NonEmptyCell};
 use macroquad::prelude::*;
-mod game;
 mod display;
 mod eventHandler;
+mod game;
 mod utils;
 // mod menu;
 
 #[macroquad::main("Gomoku")]
 async fn main() {
-	let mut game = game::Game::new();
-	game.launch().await;
+    let mut game = game::Game::new();
+    game.launch().await;
     // let mut test = Board::new();
     // test.set_and_check(3, 5, NonEmptyCell::White);
     // test.set_and_check(3, 4, NonEmptyCell::White);
