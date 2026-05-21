@@ -258,7 +258,13 @@ impl Game {
 	}
 
 	pub fn is_current_player_ai(&self) -> bool {
-		self.get_current_player().unwrap().is_ai()
+		if self.get_current_player().is_some() {
+
+			self.get_current_player().unwrap().is_ai()
+		}
+		else {
+			return false;
+		}
 	}
 
 	pub async fn ai_move(&mut self) {
@@ -266,6 +272,9 @@ impl Game {
 			self.ai_timer -= get_frame_time();
 			if self.ai_timer <= 0. {
 				
+
+
+
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
 				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3

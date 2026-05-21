@@ -1,6 +1,7 @@
 use crate::utils::scale_to_resolution;
 use macroquad::{miniquad::EventHandler, prelude::*};
 
+#[derive(PartialEq, Clone, Copy)]
 pub enum MessageType {
     Error,
     Info,
@@ -13,11 +14,11 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(text: String, message_type: MessageType) -> Self {
+    pub fn new(text: String, mess_type: MessageType) -> Self {
         Message {
             text,
-            message_type,
-            timer: 1.,
+            message_type: mess_type,
+            timer: if mess_type == MessageType::Error {1.} else {2.},
         }
     }
     pub fn display_message(&self) {
