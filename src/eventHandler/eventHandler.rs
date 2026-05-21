@@ -52,14 +52,17 @@ pub async fn event_handler(game: &mut Game) {
                     &mut game.board,
                     game.current_player.get_opposite_non_empty(),
                 );
-                match game
-                    .board
-                    .set_and_check(new_move.0, new_move.1, game.current_player)
-                {
+                match game.board.set_and_check(
+                    new_move.0,
+                    new_move.1,
+                    game.current_player.get_opposite_non_empty(),
+                ) {
                     Ok(true) => {
                         game.game_state = GameState::GameOver;
                     }
-                    Ok(false) => {}
+                    Ok(false) => {
+                        // game.current_player = game.current_player.get_opposite_non_empty();
+                    }
                     Err(e) => {
                         game.message = Some(Message::new(e.to_string(), MessageType::Error));
                     }

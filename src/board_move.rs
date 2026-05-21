@@ -32,11 +32,13 @@ impl Board {
                     Cell::Black => {
                         for captured in mov.captured {
                             self.add_element(captured.0, captured.1, NonEmptyCell::White);
+                            self.captured_by_user[NonEmptyCell::Black as usize] -= 1;
                         }
                     }
                     Cell::White => {
                         for captured in mov.captured {
                             self.add_element(captured.0, captured.1, NonEmptyCell::Black);
+                            self.captured_by_user[NonEmptyCell::White as usize] -= 1;
                         }
                     }
                     _ => (),
@@ -211,6 +213,11 @@ impl Board {
     }
 }
 
+#[inline(always)]
+pub fn valid_move(x: i32, y: i32) -> bool {
+    x >= 0 && x < BOARD_SIZE as i32 && y >= 0 && y < BOARD_SIZE as i32
+}
+
 impl Board {
     #[inline(always)]
     fn match_cell(cell: Cell, curent_cell: Cell, expected: u8) -> bool {
@@ -363,6 +370,8 @@ impl Board {
         let opposite_cell = cell.get_opposite();
 
         if self.captured_by_user[cell as usize] >= 10 {
+            println!("Player {} wins by capture!", cell);
+            println!("Captured pieces: {}", self.captured_by_user[cell as usize]);
             return true;
         }
 
