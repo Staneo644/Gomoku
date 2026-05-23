@@ -1,7 +1,6 @@
 use crate::board::{Board, NonEmptyCell};
 
 const CELLS_TO_CHECK: usize = 3;
-const OPPOSITE_CELL_TO_CHECK: usize = 3;
 struct MoveWithScore {
     position: (usize, usize),
     score: i32,
@@ -66,8 +65,8 @@ fn minimax(
     best_eval
 }
 
-pub fn ia_move(board: &mut Board, cell: NonEmptyCell) -> (usize, usize) {
-    let Result = minimax(board, 10, true, cell).position;
-    println!("Best move: {:?}", Result);
-    Result
+pub fn ai_move_t(board: &mut Board, cell: NonEmptyCell) -> (usize, usize) {
+    let result = minimax(board, 10, true, cell).position;
+    println!("Best move: {:?}", result);
+    result
 }

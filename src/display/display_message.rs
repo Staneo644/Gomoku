@@ -1,5 +1,5 @@
 use crate::utils::scale_to_resolution;
-use macroquad::{miniquad::EventHandler, prelude::*};
+use macroquad::prelude::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum MessageType {
@@ -18,7 +18,11 @@ impl Message {
         Message {
             text,
             message_type: mess_type,
-            timer: if mess_type == MessageType::Error {1.} else {2.},
+            timer: if mess_type == MessageType::Error {
+                1.
+            } else {
+                2.
+            },
         }
     }
     pub fn display_message(&self) {

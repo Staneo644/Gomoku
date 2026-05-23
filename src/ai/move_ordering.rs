@@ -1,4 +1,4 @@
-use super::scoring::{self, CAPTURE_THREAT, SCORING_TABLE};
+use super::scoring::{self, SCORING_TABLE};
 use crate::{
     board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
     board_move::valid_move,

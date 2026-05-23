@@ -1,4 +1,3 @@
-use crate::ai::minimax::ia_move;
 use crate::display::display_message::*;
 use crate::game::{Game, GameMode, GameState, GameVariant};
 use crate::menu::menu::MenuAction;
