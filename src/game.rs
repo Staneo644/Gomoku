@@ -1,6 +1,7 @@
 use crate::board::{Board, NonEmptyCell};
 use crate::display::display_message::*;
 use crate::eventHandler::eventHandler::*;
+use crate::utils::scale_to_resolution;
 use macroquad::prelude::*;
 use crate::menu::menu::{Menu};
 use crate::menu::new_game_menu::NewGameMenu;
@@ -55,6 +56,7 @@ pub enum GameState {
 	NewGameMenu,
 	Finished,
 	Exiting,
+	PickColor,
 }
 
 pub struct Game {
@@ -219,27 +221,46 @@ impl Game {
 		}
 	}
 
+	pub fn pick_color(&mut self) {
+		let rect_size = vec2(scale_to_resolution(100.), scale_to_resolution(75.));
+		let rect_pos = vec2(scale_to_resolution(screen_width() * 0.45), scale_to_resolution(screen_height() * 0.4625));
+		let rect_color = Color {r: 0., g:0., b:0., a:0.7};
+		let title_dimension = measure_text(
+			&self.get_current_player().unwrap().name,
+			None, 
+			scale_to_resolution(30.),
+			1.);
+		
+	}
+
+	pub fn set_random_first_player(&mut self) {
+		let rng = rand::gen_range(0, 2);
+		if rng == 0 {
+			self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
+			self.current_player = 1;
+		}
+		else {
+			self.players.as_mut().unwrap()[1].assign_color(NonEmptyCell::White);
+		}
+	}
+
 	pub fn adapt_to_game_mode_and_variant(&mut self) {
 		self.create_players();
-		// insert more adaptations based on game mode and variant here
-		 match self.game_variant {
+		match self.game_variant {
 			GameVariant::Standard => {
-				let rng = rand::gen_range(0, 2);
-				if rng == 0 {
-					self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
-					self.current_player = 1;
-				}
-				else {
-					self.players.as_mut().unwrap()[1].assign_color(NonEmptyCell::White);
-				}
+				self.set_random_first_player();
 			}
-			GameVariant::Swap2 => {
+			GameVariant::Swap2 | GameVariant::SingleSwap => {
+				self.set_random_first_player();
+				if self.get_current_player().is_some() {
+					*self.get_current_player_mut().unwrap().get_number_of_turn_mut() = 3;
+					*self.players.as_mut().unwrap()[self.current_player + 1 % 2].get_number_of_turn_mut() = -1;
+				}
 				// Implement Swap2 rules here
 			}
-			GameVariant::SingleSwap => {
-				// Implement Single Swap rules here
-			}
 			GameVariant::Pro => {
+				self.set_random_first_player();
+				
 				// Implement Pro rules here
 			}
 			GameVariant::None => {
@@ -250,11 +271,26 @@ impl Game {
 	}
 
 	pub fn change_player(&mut self) {
-		self.current_player = (self.current_player + 1) % 2;
+		if self.get_current_player().unwrap().get_number_of_turn() == 1{
+			self.current_player = (self.current_player + 1) % 2;
+		}
+		else if self.get_current_player().unwrap().get_number_of_turn() > 1 {
+			let color = self.get_current_player().unwrap().get_color();
+			self.get_current_player_mut().unwrap().assign_color(color.get_opposite_non_empty());
+			*self.get_current_player_mut().unwrap().get_number_of_turn_mut() -= 1;
+		}
+		else if self.get_current_player().unwrap().get_number_of_turn() == -1 {
+			self.game_state = GameState::PickColor;
+		}
 	}
 
 	pub fn get_current_player(&self) -> Option<&Player> {
 		self.players.as_ref().map(|players| &players[self.current_player])
+	}
+
+
+	pub fn get_current_player_mut(&mut self) -> Option<&mut Player> {
+		self.players.as_mut().map(|players| &mut players[self.current_player])
 	}
 
 	pub fn is_current_player_ai(&self) -> bool {

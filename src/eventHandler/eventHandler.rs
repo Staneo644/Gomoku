@@ -52,6 +52,7 @@ pub async fn place_stone_handler(game: &mut Game, board_x: usize, board_y: usize
 			game.game_state = GameState::Finished;
 		},
 		Ok(false) => {
+			println!("{}", game.get_current_player().unwrap().name);
 			game.change_player();
 		},
 		Err(e) => {
