@@ -1,12 +1,14 @@
+use crate::ai::minimax::ai_move_t;
 use crate::board::{Board, NonEmptyCell};
 use crate::display::display_message::*;
-use crate::eventHandler::eventHandler::*;
+use crate::event_handler::event_handler::*;
 use crate::utils::scale_to_resolution;
 use macroquad::prelude::*;
 use crate::menu::menu::{Menu};
 use crate::menu::new_game_menu::NewGameMenu;
-use std::fmt;
+use crate::menu::color_menu::ColorMenu;
 use crate::player::*;
+use std::fmt;
 
 impl fmt::Display for GameMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -42,9 +44,9 @@ pub enum GameMode {
 pub enum GameVariant {
     None,
     Standard,
-	Swap2,
-	SingleSwap,
-	Pro,
+    Swap2,
+    SingleSwap,
+    Pro,
     // insert more variants here
 }
 
@@ -54,9 +56,12 @@ pub enum GameState {
 	MainMenu,
 	ResumeGame,
 	NewGameMenu,
+	SettingsMenu,
 	Finished,
 	Exiting,
 	PickColor,
+	Swap1,
+	Swap2,
 }
 
 pub struct Game {
@@ -67,61 +72,69 @@ pub struct Game {
     pub game_state: GameState,
     pub message: Option<Message>,
     pub menu: Menu,
-	pub new_game_menu: NewGameMenu,
-	pub players: Option<[Player; 2]>,
-	pub ai_thinking: bool,
-	pub ai_timer: f32,
+    pub new_game_menu: NewGameMenu,
+    pub players: Option<[Player; 2]>,
+    pub ai_thinking: bool,
+    pub ai_timer: f32,
+	pub pick_color_menu: ColorMenu,
 }
 
 impl Game {
-	pub fn new() -> Self {
-		Self {
-			board: Board::new(),
-			current_player: 0,
-			game_mode: GameMode::None,
-			game_variant: GameVariant::None,
-			game_state: GameState::MainMenu,
-			message: None,
-			menu: Menu::new(),
-			new_game_menu: NewGameMenu::new(),
-			players: None,
-			ai_thinking: false,
-			ai_timer: 1.0,
-		}
-		// display window to pick game mode and variant
-	}
-	
-	pub fn reset(&mut self) {
-		self.board = Board::new();
-		self.current_player = 0;
-		self.game_mode = GameMode::None;
-		self.game_variant = GameVariant::None;
-		self.game_state = GameState::MainMenu;
-		self.new_game_menu = NewGameMenu::new();
-		self.players = None;
-		self.ai_thinking = false;
-		self.ai_timer = 1.0;
+    pub fn new() -> Self {
+        Self {
+            board: Board::new(),
+            current_player: 0,
+            game_mode: GameMode::None,
+            game_variant: GameVariant::None,
+            game_state: GameState::MainMenu,
+            message: None,
+            menu: Menu::new(),
+            new_game_menu: NewGameMenu::new(),
+            players: None,
+            ai_thinking: false,
+            ai_timer: 1.0,
+			pick_color_menu: ColorMenu::new(),
+        }
+        // display window to pick game mode and variant
+    }
 
-		// display window to pick game mode and variant
+    pub fn reset(&mut self) {
+        self.board = Board::new();
+        self.current_player = 0;
+        self.game_mode = GameMode::None;
+        self.game_variant = GameVariant::None;
+        self.game_state = GameState::MainMenu;
+        self.new_game_menu = NewGameMenu::new();
+        self.players = None;
+        self.ai_thinking = false;
+        self.ai_timer = 1.0;
 
-	}
+        // display window to pick game mode and variant
+    }
 
-	pub fn set_game_state(&mut self, state: GameState) {
-		if state == GameState::ResumeGame && self.game_mode == GameMode::None {
-			self.message = Some(Message::new("No Game to Resume".to_string(), MessageType::Error));
-			return;
+    pub fn set_game_state(&mut self, state: GameState) {
+        if state == GameState::ResumeGame && self.game_mode == GameMode::None {
+            self.message = Some(Message::new(
+                "No Game to Resume".to_string(),
+                MessageType::Error,
+            ));
+            return;
+        } else if state == GameState::ResumeGame {
+            self.game_state = GameState::Playing;
+            return;
+        }
+        if state == GameState::NewGameMenu {
+            self.reset();
+            self.game_state = GameState::NewGameMenu;
+            return;
+        }
+		else if state == GameState::Swap2 {
+			self.get_current_player_mut().unwrap().set_number_of_turn(2);
+			self.players.as_mut().unwrap()[(self.current_player + 1) % 2].set_number_of_turn(-1);
 		}
-		else if state == GameState::ResumeGame {
-			self.game_state = GameState::Playing;
-			return;
-		}
-		if state == GameState::NewGameMenu {
-			self.reset();
-			self.game_state = GameState::NewGameMenu;
-			return;
-		}
-		self.game_state = state;
-	}
+
+        self.game_state = state;
+    }
 
     pub fn draw_mouse_hover(&self) {
         if self.game_state != GameState::Playing {
@@ -169,69 +182,69 @@ impl Game {
         );
     }
 
-	fn display_message(&mut self) {
-		if let Some(message) = &mut self.message {
-				message.display_message();
-				message.timer -= get_frame_time();
-				if message.timer <= 0. {
-					self.message = None;
-				}
-		}
-	}
+    fn display_message(&mut self) {
+        if let Some(message) = &mut self.message {
+            message.display_message();
+            message.timer -= get_frame_time();
+            if message.timer <= 0. {
+                self.message = None;
+            }
+        }
+    }
 
-	pub async fn launch(&mut self) {
-		request_new_screen_size(1000., 1000.);
-		while self.game_state != GameState::Exiting {
-			self.board.draw_board();
-			self.board.draw_counters(self);
-			self.board.place_all_stones();
-			self.draw_mouse_hover();
-			event_handler(self).await;
-			self.display_message();
+    pub async fn launch(&mut self) {
+        request_new_screen_size(1000., 1000.);
+        while self.game_state != GameState::Exiting {
+            self.board.draw_board();
+            self.board.draw_counters(self);
+            self.board.place_all_stones();
+            self.draw_mouse_hover();
+            event_handler(self).await;
+            self.display_message();
 
-			match self.game_state {
-				GameState::MainMenu => self.menu.draw(),
-				GameState::NewGameMenu => self.new_game_menu.draw(),
-				GameState::Finished => {
-					let winner = self.players.as_ref().unwrap()[self.current_player].name.clone();
-					self.message = Some(Message::new(format!("{} wins! Starting a new game...", winner), MessageType::Info));
-					self.reset();
-				},
-				_ => {}
-			}
-			if self.is_current_player_ai() {
-				self.ai_move().await;
-			}
-			next_frame().await;
-		}
-	}
+            match self.game_state {
+                GameState::MainMenu => self.menu.draw(),
+                GameState::NewGameMenu => self.new_game_menu.draw(),
+				GameState::PickColor => self.pick_color_menu.draw(self.game_state == GameState::Swap2),
+                GameState::Finished => {
+                    let winner = self.players.as_ref().unwrap()[self.current_player]
+                        .name
+                        .clone();
+                    self.message = Some(Message::new(
+                        format!("{} wins! Starting a new game...", winner),
+                        MessageType::Info,
+                    ));
+                    self.reset();
+                }
+                _ => {}
+            }
+            if self.is_current_player_ai() {
+                self.ai_move().await;
+            }
+            next_frame().await;
+        }
+    }
 
-	pub fn create_players(&mut self) {
-		match self.game_mode {
-			GameMode::HumanVsHuman => {
-				self.players = Some([Player::new("Player 1".to_string(), PlayerType::Human), Player::new("Player 2".to_string(), PlayerType::Human)]);
-			}
-			GameMode::HumanVsAI => {
-				self.players = Some([Player::new("Player 1".to_string(), PlayerType::Human), Player::new("AI".to_string(), PlayerType::AI)]);
-			}
-			_ => {
-				self.players = None;
-				return;
-			}
-		}
-	}
-
-	pub fn pick_color(&mut self) {
-		let rect_size = vec2(scale_to_resolution(100.), scale_to_resolution(75.));
-		let rect_pos = vec2(scale_to_resolution(screen_width() * 0.45), scale_to_resolution(screen_height() * 0.4625));
-		let rect_color = Color {r: 0., g:0., b:0., a:0.7};
-		let title_dimension = measure_text(
-			&self.get_current_player().unwrap().name,
-			None, 
-			scale_to_resolution(30.),
-			1.);
-		
-	}
+    pub fn create_players(&mut self) {
+        match self.game_mode {
+            GameMode::HumanVsHuman => {
+                self.players = Some([
+                    Player::new("Player 1".to_string(), PlayerType::Human),
+                    Player::new("Player 2".to_string(), PlayerType::Human),
+                ]);
+            }
+            GameMode::HumanVsAI => {
+                self.players = Some([
+                    Player::new("Player 1".to_string(), PlayerType::Human),
+                    Player::new("AI".to_string(), PlayerType::AI),
+                ]);
+            }
+            _ => {
+                self.players = None;
+                return;
+            }
+        }
+    }
 
 	pub fn set_random_first_player(&mut self) {
 		let rng = rand::gen_range(0, 2);
@@ -253,10 +266,10 @@ impl Game {
 			GameVariant::Swap2 | GameVariant::SingleSwap => {
 				self.set_random_first_player();
 				if self.get_current_player().is_some() {
-					*self.get_current_player_mut().unwrap().get_number_of_turn_mut() = 3;
-					*self.players.as_mut().unwrap()[self.current_player + 1 % 2].get_number_of_turn_mut() = -1;
+					self.get_current_player_mut().unwrap().set_number_of_turn(3);
+					// println!("{}", (self.current_player + 1) % 2);
+					self.players.as_mut().unwrap()[(self.current_player + 1) % 2].set_number_of_turn(-1);
 				}
-				// Implement Swap2 rules here
 			}
 			GameVariant::Pro => {
 				self.set_random_first_player();
@@ -284,47 +297,48 @@ impl Game {
 		}
 	}
 
-	pub fn get_current_player(&self) -> Option<&Player> {
-		self.players.as_ref().map(|players| &players[self.current_player])
+	pub fn change_players_colors(&mut self, color: NonEmptyCell) {
+		self.get_current_player_mut().unwrap().assign_color(color);
+		self.players.as_mut().unwrap()[self.current_player + 1 % 2].assign_color(color.get_opposite_non_empty());
+		if color == NonEmptyCell::White {
+			self.current_player = (self.current_player + 1) % 2;
+		}
 	}
+
+    pub fn get_current_player(&self) -> Option<&Player> {
+        self.players
+            .as_ref()
+            .map(|players| &players[self.current_player])
+    }
 
 
 	pub fn get_current_player_mut(&mut self) -> Option<&mut Player> {
 		self.players.as_mut().map(|players| &mut players[self.current_player])
 	}
 
-	pub fn is_current_player_ai(&self) -> bool {
-		if self.get_current_player().is_some() {
+    pub fn is_current_player_ai(&self) -> bool {
+        if self.get_current_player().is_some() {
+            self.get_current_player().unwrap().is_ai()
+        } else {
+            return false;
+        }
+    }
 
-			self.get_current_player().unwrap().is_ai()
-		}
-		else {
-			return false;
-		}
-	}
+    pub async fn ai_move(&mut self) {
+        if self.ai_thinking {
+            self.ai_timer -= get_frame_time();
+            if self.ai_timer <= 0. {
+                let current_color = self.get_current_player().unwrap().get_color();
 
-	pub async fn ai_move(&mut self) {
-		if self.ai_thinking {
-			self.ai_timer -= get_frame_time();
-			if self.ai_timer <= 0. {
-				
+                let (x, y) = ai_move_t(&mut self.board, current_color);
 
+                place_stone_handler(self, x, y).await;
 
-
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				//AUREEEEEEEEEELLLL, IMPLEMENT THE AI MOVE LOGIC HERE PLEASE, I BEG YOUUUUUUUU <3
-				
-				self.ai_timer = 1.0;
-				self.ai_thinking = false;
-			}
-		}
-		else {
-			self.ai_thinking = true;
-		}
-
-	}
+                self.ai_timer = 1.0;
+                self.ai_thinking = false;
+            }
+        } else {
+            self.ai_thinking = true;
+        }
+    }
 }

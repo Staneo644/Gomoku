@@ -1,38 +1,13 @@
 use crate::{board::NonEmptyCell, game::GameState, utils::scale_to_resolution};
 use macroquad::prelude::*;
-pub const MENU_WIDTH: f32 = 300.;
-pub const MENU_HEIGHT: f32 = 400.;
-pub const MENU_START_POINT: Vec2 = Vec2::new(350., 300.);
-pub const MENU_OPTIONS: [&str; 4] = ["NEW GAME", "RESUME GAME", "SETTINGS", "EXIT"];
-pub const OPTION_HEIGHT: f32 = 50.;
-pub const OPTION_WIDTH: f32 = 250.;
 use crate::game::{GameMode, GameVariant};
 use std::fmt;
 
-#[derive(PartialEq, Clone, Copy)]
-pub enum MenuAction {
-    ChangeState(GameState),
-    SetGameMode(GameMode),
-    SetGameVariant(GameVariant),
-	PickColor(NonEmptyCell),
-}
-
-impl fmt::Display for MenuAction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MenuAction::ChangeState(_) => write!(f, "ChangeState"),
-            MenuAction::SetGameMode(_) => write!(f, "SetGameMode"),
-            MenuAction::SetGameVariant(_) => write!(f, "SetGameVariant"),
-			MenuAction::PickColor(_) => write!(f, "PickColor"),
-		}
-    }
-}
-
-pub struct Menu {
+pub struct SettingsMenu {
     options: Vec<MenuOption>,
 }
 
-impl Menu {
+impl SettingsMenu {
     pub fn new() -> Self {
         let mut menu = Self {
             options: Vec::new(),
@@ -121,76 +96,3 @@ impl Menu {
         None
     }
 }
-
-pub struct MenuOption {
-    text: String,
-    action: MenuAction,
-    location: (Vec2, Vec2),
-}
-
-impl MenuOption {
-    pub fn new(text: String, action: MenuAction, location: (Vec2, Vec2)) -> Self {
-        Self {
-            text,
-            action: action,
-            location,
-        }
-    }
-    pub fn is_hovered(&self, mouse_pos: Vec2) -> bool {
-		let mouse_pos_scale = Vec2::new(scale_to_resolution(mouse_pos.x), scale_to_resolution(mouse_pos.y));
-        let (start, end) = self.location;
-        mouse_pos_scale.x >= start.x
-            && mouse_pos_scale.x <= end.x
-            && mouse_pos_scale.y >= start.y
-            && mouse_pos_scale.y <= end.y
-    }
-
-    pub fn draw(&self) {
-        let color = if self.is_hovered(mouse_position().into()) {
-            LIGHTGRAY
-        } else {
-            GRAY
-        };
-		let start_point = Vec2::new(
-			scale_to_resolution(self.location.0.x), 
-			scale_to_resolution(self.location.0.y)
-		);
-		let size = Vec2::new(
-			scale_to_resolution(self.location.1.x - self.location.0.x),
-			scale_to_resolution(self.location.1.y - self.location.0.y)
-		);
-        draw_rectangle(
-            start_point.x,
-            start_point.y,
-            size.x,
-            size.y,
-            color,
-        );
-        let text_size = scale_to_resolution(20.);
-        let text_dimensions = measure_text(&self.text, None, text_size as u16, 1.);
-        let text_x = start_point.x
-            + (size.x - text_dimensions.width) / 2.;
-        let text_y = start_point.y
-            + (size.y + text_dimensions.height) / 2.;
-        draw_text(&self.text, text_x, text_y, text_size, BLACK);
-    }
-
-    pub fn click(&self) -> Option<MenuAction> {
-        if self.is_hovered(mouse_position().into()) {
-            Some(self.action)
-        } else {
-            None
-        }
-    }
-}
-
-/* Main Menu :
-- New Game :
-    - Player vs Player
-    - Player vs AI
-    &&
-    - game starts variants
-- Resume Game
-- Settings (? usefull ?)
-- Exit
-*/
