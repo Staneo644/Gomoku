@@ -1,44 +1,31 @@
-use crate::{board::NonEmptyCell, game::GameState, utils::scale_to_resolution};
+use crate::{
+	board::NonEmptyCell, game::GameState, menu::menu::{
+		MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption
+	}, utils::scale_to_resolution};
 use macroquad::prelude::*;
 use crate::game::{GameMode, GameVariant};
 use std::fmt;
 
 pub struct SettingsMenu {
-    options: Vec<MenuOption>,
+    input: String,
+    text_box_focused: bool,
+    apply_button: MenuOption,
+	back_button: MenuOption,
+    error: Option<String>,
 }
 
 impl SettingsMenu {
     pub fn new() -> Self {
-        let mut menu = Self {
-            options: Vec::new(),
-        };
-
-        let mut index = 0;
-        for name in MENU_OPTIONS {
-            let y_position = MENU_START_POINT.y + 100. + index as f32 * (OPTION_HEIGHT + 10.);
-            let x_position = MENU_START_POINT.x + (MENU_WIDTH - OPTION_WIDTH) / 2.;
-            menu.add_option(
-                name.to_string(),
-                (
-                    Vec2::new(x_position, y_position),
-                    Vec2::new(x_position + OPTION_WIDTH, y_position + OPTION_HEIGHT),
-                ),
-            );
-            index += 1;
-        }
-
-        menu
-    }
-
-    fn add_option(&mut self, text: String, location: (Vec2, Vec2)) {
-        let action = match text.as_str() {
-            "NEW GAME" => MenuAction::ChangeState(GameState::NewGameMenu),
-            "RESUME GAME" => MenuAction::ChangeState(GameState::ResumeGame),
-			"SETTINGS" => MenuAction::ChangeState(GameState::SettingsMenu),
-            "EXIT" => MenuAction::ChangeState(GameState::Exiting),
-            _ => MenuAction::ChangeState(GameState::MainMenu), // default case, should not happen
-        };
-        self.options.push(MenuOption::new(text, action, location));
+       let menu = Self {
+			input: String::new(),
+			text_box_focused: false,
+			error: None,
+		}
+		
+		let start_location
+		menu.apply_button: MenuOption::new("APPLY".to_string(), MenuAction::ResizeWindow(1000), (Vec2::ZERO, Vec2::ZERO)),
+		menu.back_button: MenuOption::new("BACK".to_string(), MenuAction::ChangeState(GameState::MainMenu), (Vec2::ZERO, Vec2::ZERO)),
+	   
     }
 
     pub fn draw(&self) {
@@ -88,7 +75,10 @@ impl SettingsMenu {
         }
     }
     pub fn click(&self) -> Option<MenuAction> {
-        for option in &self.options {
+        if let Some(menu_action) = self.apply_button {
+
+		}
+		for option in &self.options {
             if let Some(menu_action) = option.click() {
                 return Some(menu_action);
             }

@@ -7,7 +7,7 @@ pub const MENU_OPTIONS: [&str; 4] = ["NEW GAME", "RESUME GAME", "SETTINGS", "EXI
 pub const OPTION_HEIGHT: f32 = 50.;
 pub const OPTION_WIDTH: f32 = 250.;
 use crate::game::{GameMode, GameVariant};
-use std::fmt;
+use std::fmt::{self, write};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum MenuAction {
@@ -15,6 +15,7 @@ pub enum MenuAction {
     SetGameMode(GameMode),
     SetGameVariant(GameVariant),
 	PickColor(NonEmptyCell),
+	ResizeWindow(u16)
 }
 
 impl fmt::Display for MenuAction {
@@ -24,6 +25,7 @@ impl fmt::Display for MenuAction {
             MenuAction::SetGameMode(_) => write!(f, "SetGameMode"),
             MenuAction::SetGameVariant(_) => write!(f, "SetGameVariant"),
 			MenuAction::PickColor(_) => write!(f, "PickColor"),
+			MenuAction::ResizeWindow(_) => write!(f, "ResizeWindow")
 		}
     }
 }
