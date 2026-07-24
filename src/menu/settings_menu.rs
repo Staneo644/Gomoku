@@ -1,6 +1,6 @@
 use crate::{
 	board::NonEmptyCell, game::GameState, menu::menu::{
-		MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption
+		MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, OPTION_HEIGHT, OPTION_WIDTH, MenuAction, MenuOption
 	}, utils::scale_to_resolution};
 use macroquad::prelude::*;
 use crate::game::{GameMode, GameVariant};
@@ -8,6 +8,7 @@ use std::fmt;
 
 pub struct SettingsMenu {
     input: String,
+	inputMenuOption: InputMenuOption,
     text_box_focused: bool,
     apply_button: MenuOption,
 	back_button: MenuOption,
@@ -85,4 +86,16 @@ impl SettingsMenu {
         }
         None
     }
+}
+
+pub struct InputMenuOption {
+	inputName: String,
+	input: String,
+	location: (Vec2, Vec2),
+	action: MenuAction,
+}
+
+impl InputMenuOption {
+	pub fn new() -> Self {}
+	pub fn draw(&self) {}
 }
