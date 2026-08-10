@@ -70,14 +70,14 @@ impl Menu {
 
     pub fn draw(&self) {
         let menu_to_scale = Vec2::new(
-            scale_to_resolution(MENU_WIDTH),
-            scale_to_resolution(MENU_HEIGHT),
+            scale_to_resolution(MENU_WIDTH, true),
+            scale_to_resolution(MENU_HEIGHT, false),
         );
         let menu_start = Vec2::new(
-            scale_to_resolution(MENU_START_POINT.x),
-            scale_to_resolution(MENU_START_POINT.y),
+            scale_to_resolution(MENU_START_POINT.x, true),
+            scale_to_resolution(MENU_START_POINT.y, false),
         );
-        let text_dimensions = measure_text("MENU", None, scale_to_resolution(40.) as u16, 0.8);
+        let text_dimensions = measure_text("MENU", None, scale_to_resolution(40., false) as u16, 0.8);
 
         draw_rectangle(
             0.,
@@ -105,23 +105,29 @@ impl Menu {
         );
         draw_text(
             "MENU",
-            screen_width() * 0.5 - text_dimensions.width / 2.,
-            screen_height() * 0.35,
-            scale_to_resolution(40.),
+            scale_to_resolution(500. - text_dimensions.width / 2., true),
+            scale_to_resolution(350., false),
+            scale_to_resolution(40., false),
             WHITE,
         );
         for option in &self.options {
             option.draw();
         }
     }
-    pub fn click(&self) -> Option<MenuAction> {
-        for option in &self.options {
+    pub fn click(&mut self) -> Option<MenuAction> {
+        for option in &mut self.options {
             if let Some(menu_action) = option.click() {
                 return Some(menu_action);
             }
         }
         None
     }
+}
+
+pub trait Button {
+	fn is_hovered(&self, mouse_pos: Vec2) -> bool;
+	fn draw(&self);
+	fn click(&mut self) -> Option<MenuAction>;
 }
 
 pub struct MenuOption {
@@ -138,28 +144,30 @@ impl MenuOption {
             location,
         }
     }
-    pub fn is_hovered(&self, mouse_pos: Vec2) -> bool {
-		let mouse_pos_scale = Vec2::new(scale_to_resolution(mouse_pos.x), scale_to_resolution(mouse_pos.y));
+}
+impl Button for MenuOption {
+    fn is_hovered(&self, mouse_pos: Vec2) -> bool {
+		let mouse_pos_scale = Vec2::new(mouse_pos.x, mouse_pos.y);
         let (start, end) = self.location;
-        mouse_pos_scale.x >= start.x
-            && mouse_pos_scale.x <= end.x
-            && mouse_pos_scale.y >= start.y
-            && mouse_pos_scale.y <= end.y
+        mouse_pos_scale.x >= scale_to_resolution(start.x, true)
+            && mouse_pos_scale.x <= scale_to_resolution(end.x, true)
+            && mouse_pos_scale.y >= scale_to_resolution(start.y, false)
+            && mouse_pos_scale.y <= scale_to_resolution(end.y, false)
     }
 
-    pub fn draw(&self) {
+    fn draw(&self) {
         let color = if self.is_hovered(mouse_position().into()) {
             LIGHTGRAY
         } else {
             GRAY
         };
 		let start_point = Vec2::new(
-			scale_to_resolution(self.location.0.x), 
-			scale_to_resolution(self.location.0.y)
+			scale_to_resolution(self.location.0.x, true), 
+			scale_to_resolution(self.location.0.y, false)
 		);
 		let size = Vec2::new(
-			scale_to_resolution(self.location.1.x - self.location.0.x),
-			scale_to_resolution(self.location.1.y - self.location.0.y)
+			scale_to_resolution(self.location.1.x - self.location.0.x, true),
+			scale_to_resolution(self.location.1.y - self.location.0.y, false)
 		);
         draw_rectangle(
             start_point.x,
@@ -168,7 +176,7 @@ impl MenuOption {
             size.y,
             color,
         );
-        let text_size = scale_to_resolution(20.);
+        let text_size = scale_to_resolution(20., false);
         let text_dimensions = measure_text(&self.text, None, text_size as u16, 1.);
         let text_x = start_point.x
             + (size.x - text_dimensions.width) / 2.;
@@ -177,7 +185,7 @@ impl MenuOption {
         draw_text(&self.text, text_x, text_y, text_size, BLACK);
     }
 
-    pub fn click(&self) -> Option<MenuAction> {
+    fn click(&mut self) -> Option<MenuAction> {
         if self.is_hovered(mouse_position().into()) {
             Some(self.action)
         } else {

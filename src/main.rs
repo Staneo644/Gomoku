@@ -9,8 +9,18 @@ mod menu;
 mod player;
 mod utils;
 // mod menu;
+use macroquad::prelude::*;
 
-#[macroquad::main("Gomoku")]
+fn window_conf() -> Conf {
+    Conf {
+        window_resizable: true,
+		fullscreen: true,
+        window_title: String::from("Gomoku"),
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut game = game::Game::new();
     game.launch().await;

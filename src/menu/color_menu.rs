@@ -1,5 +1,6 @@
 use macroquad::{math::Vec2, window::screen_width};
 use macroquad::prelude::*;
+use crate::menu::menu::Button;
 use crate::{board::NonEmptyCell, game::GameState, menu::menu::{MenuAction, MenuOption}, utils::scale_to_resolution};
 
 const COLOR_OPTIONS: [&str; 3] = ["BLACK", "PLAY 2", "WHITE"];
@@ -49,14 +50,14 @@ impl ColorMenu {
 
 	pub fn draw(&self, swap2: bool) {
 		let menu_to_scale = Vec2::new(
-            scale_to_resolution(COLOR_OPTION_SIZE.x * self.color_options.len() as f32 + (10. * self.color_options.len() as f32 + 10.)),
-            scale_to_resolution(COLOR_OPTION_SIZE.y + 20.),
+            scale_to_resolution(COLOR_OPTION_SIZE.x * self.color_options.len() as f32 + (10. * self.color_options.len() as f32 + 10.), true),
+            scale_to_resolution(COLOR_OPTION_SIZE.y + 20., false),
         );
         let menu_start = Vec2::new(
-            scale_to_resolution(self.start_point.x - 10.),
-            scale_to_resolution(self.start_point.y - 10.),
+            scale_to_resolution(self.start_point.x - 10., true),
+            scale_to_resolution(self.start_point.y - 10., false),
         );
-        let text_dimensions = measure_text("PICK COLOR", None, scale_to_resolution(40.) as u16, 0.8);
+        let text_dimensions = measure_text("PICK COLOR", None, scale_to_resolution(40., false) as u16, 0.8);
 
 		println!("window size: {},{}\n menu_size: {}\nmenu_start_scale: {}\nmenu_start: {}",
 				screen_width(), screen_height(),
@@ -92,7 +93,7 @@ impl ColorMenu {
             "PICK COLOR",
             screen_width() * 0.5 - text_dimensions.width / 2.,
             screen_height() * 0.35,
-            scale_to_resolution(40.),
+            scale_to_resolution(40., false),
             WHITE,
         );
 		let mut optionIter = 0;

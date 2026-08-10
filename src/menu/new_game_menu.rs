@@ -1,6 +1,6 @@
 use crate::game::{GameMode, GameVariant};
 use crate::menu::menu::{
-    MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption, OPTION_HEIGHT, OPTION_WIDTH,
+    Button, MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption, OPTION_HEIGHT, OPTION_WIDTH,
 };
 pub const MODE_OPTIONS: [&str; 2] = ["HUMAN VS HUMAN", "HUMAN VS AI"];
 pub const VARIANT_OPTIONS: [&str; 4] = ["STANDARD", "SWAP2", "SINGLE SWAP", "PRO"];
@@ -70,14 +70,14 @@ impl NewGameMenu {
 
     pub fn draw(&self) {
         let menu_to_scale = Vec2::new(
-            scale_to_resolution(MENU_WIDTH),
-            scale_to_resolution(MENU_HEIGHT * 1.5),
+            scale_to_resolution(MENU_WIDTH, true),
+            scale_to_resolution(MENU_HEIGHT * 1.5, false),
         );
         let menu_start = Vec2::new(
-            scale_to_resolution(MENU_START_POINT.x),
-            scale_to_resolution(MENU_START_POINT.y * 0.66),
+            scale_to_resolution(MENU_START_POINT.x, true),
+            scale_to_resolution(MENU_START_POINT.y * 0.66, false),
         );
-        let text_dimensions = measure_text("NEW GAME", None, scale_to_resolution(40.) as u16, 0.8);
+        let text_dimensions = measure_text("NEW GAME", None, scale_to_resolution(40., false) as u16, 0.8);
 
         draw_rectangle(
             0.,
@@ -107,7 +107,7 @@ impl NewGameMenu {
             "NEW GAME",
             screen_width() * 0.5 - text_dimensions.width / 2.,
             screen_height() * 0.25,
-            scale_to_resolution(40.),
+            scale_to_resolution(40., false),
             WHITE,
         );
         if self.mode_selected == false {
@@ -122,13 +122,13 @@ impl NewGameMenu {
         }
     }
     pub fn click(&mut self) -> Option<MenuAction> {
-        for option in &self.mode_options {
+        for option in &mut self.mode_options {
             if let Some(menu_action) = option.click() {
                 self.mode_selected = true;
                 return Some(menu_action);
             }
         }
-        for option in &self.variant_options {
+        for option in &mut self.variant_options {
             if let Some(menu_action) = option.click() {
                 self.variant_selected = true;
                 return Some(menu_action);

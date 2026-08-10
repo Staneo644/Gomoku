@@ -1,8 +1,8 @@
 use crate::ai::minimax::ai_move_t;
-use crate::board::{Board, NonEmptyCell};
+use crate::board::{self, Board, NonEmptyCell};
 use crate::display::display_message::*;
 use crate::event_handler::event_handler::*;
-use crate::utils::scale_to_resolution;
+use crate::menu::settings_menu::SettingsMenu;
 use macroquad::prelude::*;
 use crate::menu::menu::{Menu};
 use crate::menu::new_game_menu::NewGameMenu;
@@ -73,10 +73,12 @@ pub struct Game {
     pub message: Option<Message>,
     pub menu: Menu,
     pub new_game_menu: NewGameMenu,
+	pub settings_menu: SettingsMenu,
     pub players: Option<[Player; 2]>,
     pub ai_thinking: bool,
     pub ai_timer: f32,
 	pub pick_color_menu: ColorMenu,
+	target_resolution: u16,
 }
 
 impl Game {
@@ -93,7 +95,9 @@ impl Game {
             players: None,
             ai_thinking: false,
             ai_timer: 1.0,
+			settings_menu: SettingsMenu::new(),
 			pick_color_menu: ColorMenu::new(),
+			target_resolution: 1000,
         }
         // display window to pick game mode and variant
     }
@@ -141,24 +145,19 @@ impl Game {
             return;
         }
         let (x, y) = mouse_position();
-        if x < screen_width() * 0.1
-            || x > screen_width() * 0.9
-            || y < screen_height() * 0.1
-            || y > screen_height() * 0.9
+		let board_size = screen_width().min(screen_height()) * 0.8;
+        if x < screen_width() / 2. - board_size / 2. * 0.95
+            || x > screen_width() / 2. + board_size / 2. * 0.95
+            || y < screen_height() / 2. - board_size / 2. * 0.95
+            || y > screen_height() / 2. + board_size / 2. * 0.95
         {
             return;
         }
-        let line_x = screen_width() * 0.1;
-        let line_y = screen_height() * 0.1;
-        let cell_size_x = screen_width() * 0.8 / 18.;
-        let cell_size_y = screen_height() * 0.8 / 18.;
-        let cell_size = if cell_size_x < cell_size_y {
-            cell_size_x
-        } else {
-            cell_size_y
-        };
-        let board_x = ((x - line_x) / cell_size_x - 0.5).floor() + 0.5;
-        let board_y = ((y - line_y) / cell_size_y - 0.5).floor() + 0.5;
+        let line_x = screen_width() / 2. - board_size / 2. * 0.9;
+        let line_y = screen_height() / 2. - board_size / 2. * 0.9;
+        let cell_size = board_size * 0.9 / 18.;
+        let board_x = ((x - line_x) / cell_size - 0.5).floor() + 0.5;
+        let board_y = ((y - line_y) / cell_size - 0.5).floor() + 0.5;
         let color = if self.get_current_player().unwrap().get_color() == NonEmptyCell::Black {
             Color {
                 r: (0.),
@@ -175,8 +174,8 @@ impl Game {
             }
         };
         draw_circle(
-            line_x + (board_x as f32) * cell_size_x + cell_size_x / 2.,
-            line_y + (board_y as f32) * cell_size_y + cell_size_y / 2.,
+            line_x + (board_x as f32) * cell_size + cell_size / 2.,
+            line_y + (board_y as f32) * cell_size + cell_size / 2.,
             cell_size / 2. - 2.,
             color,
         );
@@ -193,8 +192,11 @@ impl Game {
     }
 
     pub async fn launch(&mut self) {
-        request_new_screen_size(1000., 1000.);
         while self.game_state != GameState::Exiting {
+			if self.target_resolution != screen_width() as u16 
+				|| self.target_resolution != screen_height() as u16 {
+					request_new_screen_size(self.target_resolution as f32, self.target_resolution as f32);
+			}
             self.board.draw_board();
             self.board.draw_counters(self);
             self.board.place_all_stones();
@@ -205,6 +207,7 @@ impl Game {
             match self.game_state {
                 GameState::MainMenu => self.menu.draw(),
                 GameState::NewGameMenu => self.new_game_menu.draw(),
+				GameState::SettingsMenu => self.settings_menu.draw(),
 				GameState::PickColor => self.pick_color_menu.draw(self.game_state == GameState::Swap2),
                 GameState::Finished => {
                     let winner = self.players.as_ref().unwrap()[self.current_player]
@@ -221,6 +224,10 @@ impl Game {
             if self.is_current_player_ai() {
                 self.ai_move().await;
             }
+			if self.target_resolution != screen_width() as u16 
+				|| self.target_resolution != screen_height() as u16 {
+					request_new_screen_size(self.target_resolution as f32, self.target_resolution as f32);
+			}
             next_frame().await;
         }
     }
@@ -247,6 +254,7 @@ impl Game {
     }
 
 	pub fn set_random_first_player(&mut self) {
+		rand::srand(macroquad::miniquad::date::now() as _);
 		let rng = rand::gen_range(0, 2);
 		if rng == 0 {
 			self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
@@ -259,12 +267,11 @@ impl Game {
 
 	pub fn adapt_to_game_mode_and_variant(&mut self) {
 		self.create_players();
+		self.set_random_first_player();
 		match self.game_variant {
 			GameVariant::Standard => {
-				self.set_random_first_player();
 			}
 			GameVariant::Swap2 | GameVariant::SingleSwap => {
-				self.set_random_first_player();
 				if self.get_current_player().is_some() {
 					self.get_current_player_mut().unwrap().set_number_of_turn(3);
 					// println!("{}", (self.current_player + 1) % 2);
@@ -272,7 +279,6 @@ impl Game {
 				}
 			}
 			GameVariant::Pro => {
-				self.set_random_first_player();
 				
 				// Implement Pro rules here
 			}
@@ -341,4 +347,9 @@ impl Game {
             self.ai_thinking = true;
         }
     }
+
+	pub fn resize_window(&mut self, resolution: u16) {
+		request_new_screen_size(resolution as f32, resolution as f32);
+		self.target_resolution = resolution;
+	}
 }
