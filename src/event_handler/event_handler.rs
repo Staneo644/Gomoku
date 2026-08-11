@@ -24,8 +24,8 @@ pub fn menu_event_handler(game: &mut Game) {
             game.new_game_menu.click()
         } else if GameState::SettingsMenu == game.game_state {
 			game.settings_menu.click()
-		} else if GameState::PickColor == game.game_state {
-			game.pick_color_menu.click()
+		} else if GameState::PickColor == game.game_state && !game.is_current_player_ai() {
+			game.pick_color_menu.click(game.game_variant == GameVariant::Swap2)
 		} else {
             return;
         };
@@ -109,7 +109,14 @@ pub async fn event_handler(game: &mut Game) {
             }
         } else if game.game_state == GameState::NewGameMenu {
             game.game_state = GameState::MainMenu;
-        } else {
+        }
+		else if game.game_state == GameState::PickColor {
+			game.message = Some(Message::new(
+				"Please select a color".to_string(),
+				MessageType::Error,
+			));
+			return;
+		} else {
             game.game_state = GameState::MainMenu;
         }
     }

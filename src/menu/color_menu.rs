@@ -102,9 +102,15 @@ impl ColorMenu {
         }
 	}
 
-	pub fn click(&mut self) -> Option<MenuAction> {
+	pub fn click(&mut self, swap2: bool) -> Option<MenuAction> {
+		let mut optionIter = 0;
 		for option in &mut self.color_options {
+			optionIter += 1;
+			if !swap2 && optionIter == 2 {
+				continue;
+			}
 			if let Some(menu_action) = option.click() {
+				println!("ColorMenu: clicked on option {:?}", if menu_action == MenuAction::PickColor(NonEmptyCell::Black) { "BLACK" } else if menu_action == MenuAction::PickColor(NonEmptyCell::White) { "WHITE" } else { "PLAY 2" });
 				return Some(menu_action);
 			}
 		}

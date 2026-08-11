@@ -210,32 +210,30 @@ impl Game {
 
     pub async fn launch(&mut self) {
         while self.game_state != GameState::Exiting {
-			if self.target_resolution != screen_width() as u16 
-				|| self.target_resolution != screen_height() as u16 {
-					request_new_screen_size(self.target_resolution as f32, self.target_resolution as f32);
-			}
             self.board.draw_board();
             self.board.draw_counters(self);
             self.board.place_all_stones();
             self.draw_mouse_hover();
             event_handler(self).await;
             self.display_message();
-			if (self.game_state == GameState::PickColor){
-
-				println!("Game state: {:?}", self.game_state);
-			}
             match self.game_state {
                 GameState::MainMenu => self.menu.draw(),
                 GameState::NewGameMenu => self.new_game_menu.draw(),
 				GameState::SettingsMenu => self.settings_menu.draw(),
 				GameState::PickColor => if !self.is_current_player_ai()
 				{
-					self.pick_color_menu.draw(self.game_state == GameState::Swap2)
+					self.pick_color_menu.draw(self.game_variant == GameVariant::Swap2)
 				} else {
 					// put function to make AI pick color here
 					//for now AI will always pick black
 					self.change_players_colors(NonEmptyCell::Black);
 				},
+				GameState::Swap2 => {
+					self.game_state = GameState::Playing;
+					self.get_current_player_mut().unwrap().set_number_of_turn(2);
+					self.players.as_mut().unwrap()[(self.current_player + 1) % 2].set_number_of_turn(-1);
+					self.game_variant = GameVariant::SingleSwap;
+				}
                 GameState::Finished => {
                     let winner = self.players.as_ref().unwrap()[self.current_player]
                         .name
@@ -282,15 +280,15 @@ impl Game {
     }
 
 	pub fn set_random_first_player(&mut self) {
-		rand::srand(macroquad::miniquad::date::now() as _);
-		let rng = rand::gen_range(0, 2);
-		if rng == 0 {
-			self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
-			self.current_player = 1;
-		}
-		else {
+		// rand::srand(macroquad::miniquad::date::now() as _);
+		// let rng = rand::gen_range(0, 2);
+		// if rng == 0 {
+		// 	self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
+		// 	self.current_player = 1;
+		// }
+		// else {
 			self.players.as_mut().unwrap()[1].assign_color(NonEmptyCell::White);
-		}
+		// }
 	}
 
 	pub fn adapt_to_game_mode_and_variant(&mut self) {
@@ -318,34 +316,32 @@ impl Game {
 	}
 
 	pub fn change_player(&mut self) {
-		println!("Current player: {}, Number of turns: {}, Other player: {}, Number of turns: {}", self.current_player, self.get_current_player().unwrap().get_number_of_turn(), (self.current_player + 1) % 2, self.players.as_ref().unwrap()[(self.current_player + 1) % 2].get_number_of_turn());
 		if self.get_current_player().unwrap().get_number_of_turn() > 1 {
 			let color = self.get_current_player().unwrap().get_color();
 			self.get_current_player_mut().unwrap().assign_color(color.get_opposite_non_empty());
+			self.players.as_mut().unwrap()[(self.current_player + 1) % 2].assign_color(color);
 			*self.get_current_player_mut().unwrap().get_number_of_turn_mut() -= 1;
 		}
 		else if self.get_current_player().unwrap().get_number_of_turn() == 1{
 			self.current_player = (self.current_player + 1) % 2;
 		}
-		println!("After change player: Current player: {}, Number of turns: {}, Other player: {}, Number of turns: {}", self.current_player, self.get_current_player().unwrap().get_number_of_turn(), (self.current_player + 1) % 2, self.players.as_ref().unwrap()[(self.current_player + 1) % 2].get_number_of_turn());
 		if self.get_current_player().unwrap().get_number_of_turn() == -1 {
 			self.get_current_player_mut().unwrap().set_number_of_turn(1);
 			self.game_state = GameState::PickColor;
 		}
-		println!("After change player: Current player: {}, Number of turns: {}, Other player: {}, Number of turns: {}", self.current_player, self.get_current_player().unwrap().get_number_of_turn(), (self.current_player + 1) % 2, self.players.as_ref().unwrap()[(self.current_player + 1) % 2].get_number_of_turn());
 	}
 
 	pub fn change_players_colors(&mut self, color: NonEmptyCell) {
-		println!("Changing players' colors to {:?}", if color == NonEmptyCell::Black { "Black" } else { "White" });
+		let current_color = self.get_current_player().unwrap().get_color();
 		self.get_current_player_mut().unwrap().assign_color(color);
 		self.players.as_mut().unwrap()[(self.current_player + 1) % 2].assign_color(color.get_opposite_non_empty());
-		if color == NonEmptyCell::White {
-			self.current_player = (self.current_player + 1) % 2;
-		}
 		self.message = Some(Message::new(
-			format!("{} picked {} color", self.get_current_player().unwrap().name, color),
+			format!("{} picked {} color", self.get_current_player().unwrap().name, if color == NonEmptyCell::Black { "Black" } else { "White" }),
 			MessageType::Info,
 		));
+		if current_color != color {
+			self.current_player = (self.current_player + 1) % 2;
+		}
 		self.game_state = GameState::Playing;
 	}
 
