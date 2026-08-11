@@ -59,12 +59,6 @@ impl ColorMenu {
         );
         let text_dimensions = measure_text("PICK COLOR", None, scale_to_resolution(40., false) as u16, 0.8);
 
-		println!("window size: {},{}\n menu_size: {}\nmenu_start_scale: {}\nmenu_start: {}",
-				screen_width(), screen_height(),
-				menu_to_scale,
-				menu_start,
-				self.start_point
-		);
         draw_rectangle(
             0.,
             0.,
@@ -106,5 +100,14 @@ impl ColorMenu {
 				option.draw();
 			}
         }
+	}
+
+	pub fn click(&mut self) -> Option<MenuAction> {
+		for option in &mut self.color_options {
+			if let Some(menu_action) = option.click() {
+				return Some(menu_action);
+			}
+		}
+		None
 	}
 }

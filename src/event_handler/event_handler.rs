@@ -24,6 +24,8 @@ pub fn menu_event_handler(game: &mut Game) {
             game.new_game_menu.click()
         } else if GameState::SettingsMenu == game.game_state {
 			game.settings_menu.click()
+		} else if GameState::PickColor == game.game_state {
+			game.pick_color_menu.click()
 		} else {
             return;
         };

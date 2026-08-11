@@ -42,9 +42,13 @@ impl Menu {
 
         let mut index = 0;
         for name in MENU_OPTIONS {
+			// Skip the "SETTINGS" option for now, as the game is set in full screen
+			if name == "SETTINGS" {
+				continue;
+			}
             let y_position = MENU_START_POINT.y + 100. + index as f32 * (OPTION_HEIGHT + 10.);
             let x_position = MENU_START_POINT.x + (MENU_WIDTH - OPTION_WIDTH) / 2.;
-            menu.add_option(
+			menu.add_option(
                 name.to_string(),
                 (
                     Vec2::new(x_position, y_position),
