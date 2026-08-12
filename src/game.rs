@@ -370,7 +370,7 @@ impl Game {
             if self.ai_timer <= 0. {
                 let current_color = self.get_current_player().unwrap().get_color();
 
-                let (x, y) = ai_move_t(&mut self.board, current_color);
+                let (x, y) = ai_move_t(&mut self.board, current_color, self.game_variant);
 
                 place_stone_handler(self, x, y).await;
 

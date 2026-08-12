@@ -55,6 +55,7 @@ pub async fn place_stone_handler(game: &mut Game, board_x: usize, board_y: usize
         board_x,
         board_y,
         game.players.as_ref().unwrap()[game.current_player].get_color(),
+		game.game_variant,
     ) {
         Ok(true) => {
             game.game_state = GameState::Finished;
