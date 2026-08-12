@@ -280,15 +280,15 @@ impl Game {
     }
 
 	pub fn set_random_first_player(&mut self) {
-		// rand::srand(macroquad::miniquad::date::now() as _);
-		// let rng = rand::gen_range(0, 2);
-		// if rng == 0 {
-		// 	self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
-		// 	self.current_player = 1;
-		// }
-		// else {
+		rand::srand(macroquad::miniquad::date::now() as _);
+		let rng = rand::gen_range(0, 2);
+		if rng == 0 {
+			self.players.as_mut().unwrap()[0].assign_color(NonEmptyCell::White);
+			self.current_player = 1;
+		}
+		else {
 			self.players.as_mut().unwrap()[1].assign_color(NonEmptyCell::White);
-		// }
+		}
 	}
 
 	pub fn adapt_to_game_mode_and_variant(&mut self) {

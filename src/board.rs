@@ -195,7 +195,8 @@ impl Board {
         draw_circle(x_position, y_position, 20., color);
         let text_dimensions = measure_text(&player.name, None, scale_to_resolution(20., false) as u16, 1.);
         draw_text(&player.name, x_position + 40., y_position, scale_to_resolution(20., false), BLACK);
-        let captured_text = format!("Captured: {}", self.captured_by_user[player_index]);
+        let capture_index = if player.get_color() == NonEmptyCell::Black { 0 } else { 1 };
+		let captured_text = format!("Captured: {}", self.captured_by_user[capture_index]);
         draw_text(
             &captured_text,
             x_position + 40.,
