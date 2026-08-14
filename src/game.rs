@@ -296,17 +296,16 @@ impl Game {
 		self.set_random_first_player();
 		match self.game_variant {
 			GameVariant::Standard => {
+				return;
 			}
 			GameVariant::Swap2 | GameVariant::SingleSwap => {
 				if self.get_current_player().is_some() {
 					self.get_current_player_mut().unwrap().set_number_of_turn(3);
-					// println!("{}", (self.current_player + 1) % 2);
 					self.players.as_mut().unwrap()[(self.current_player + 1) % 2].set_number_of_turn(-1);
 				}
 			}
 			GameVariant::Pro => {
-				
-				// Implement Pro rules here
+				return;
 			}
 			GameVariant::None => {
 				// No variant selected, do nothing
@@ -368,11 +367,13 @@ impl Game {
         if self.ai_thinking {
             self.ai_timer -= get_frame_time();
             if self.ai_timer <= 0. {
+				let start_time = std::time::Instant::now();
                 let current_color = self.get_current_player().unwrap().get_color();
 
                 let (x, y) = ai_move_t(&mut self.board, current_color, self.game_variant);
 
                 place_stone_handler(self, x, y).await;
+				println!("AI move took: {:?}", start_time.elapsed());
 
                 self.ai_timer = 1.0;
                 self.ai_thinking = false;

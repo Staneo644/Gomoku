@@ -110,7 +110,6 @@ impl ColorMenu {
 				continue;
 			}
 			if let Some(menu_action) = option.click() {
-				println!("ColorMenu: clicked on option {:?}", if menu_action == MenuAction::PickColor(NonEmptyCell::Black) { "BLACK" } else if menu_action == MenuAction::PickColor(NonEmptyCell::White) { "WHITE" } else { "PLAY 2" });
 				return Some(menu_action);
 			}
 		}

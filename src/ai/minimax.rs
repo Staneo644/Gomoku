@@ -68,6 +68,6 @@ fn minimax(
 
 pub fn ai_move_t(board: &mut Board, cell: NonEmptyCell, game_variant: GameVariant) -> (usize, usize) {
     let result = minimax(board, 10, true, cell, game_variant).position;
-    println!("Best move: {:?}", result);
+    // println!("Best move: {:?}", result);
     result
 }

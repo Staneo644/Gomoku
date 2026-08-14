@@ -344,11 +344,9 @@ impl Board {
             return Err(BoardError::InvalidMove);
         }
 		else if x != 9 && y != 9 && game_variant == GameVariant::Pro && self.moves.len() == 0 {
-			println!("x: {}, y: {}", x, y);
 			return Err(BoardError::InvalidFirstMovePro);
 		}
 		else if (((x - 9) as i32).abs() < 3 && ((y - 9) as i32).abs() < 3) && game_variant == GameVariant::Pro && self.moves.len() == 2 {
-			println!("2nd move: x: {}, y: {}", x, y);
 			return Err(BoardError::InvalidSecondMovePro);
 		}
 
@@ -383,8 +381,6 @@ impl Board {
         let opposite_cell = cell.get_opposite();
 
         if self.captured_by_user[cell as usize] >= 10 {
-            println!("Player {} wins by capture!", cell);
-            println!("Captured pieces: {}", self.captured_by_user[cell as usize]);
             return true;
         }
 
@@ -412,7 +408,6 @@ impl Board {
         cell: NonEmptyCell,
 		game_variant: GameVariant
     ) -> Result<bool, BoardError> {
-		println!("Moves: {}", self.moves.len());
         match self.set(x, y, cell, game_variant) {
             Ok(()) => Ok(self.check(x, y, cell)),
             Err(e) => Err(e),
