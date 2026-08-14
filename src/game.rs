@@ -9,6 +9,9 @@ use crate::menu::new_game_menu::NewGameMenu;
 use crate::menu::color_menu::ColorMenu;
 use crate::player::*;
 use std::fmt;
+use std::sync::mpsc::{self, Receiver};
+use std::thread;
+use std::time::Instant;
 
 impl fmt::Display for GameMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -93,9 +96,11 @@ pub struct Game {
 	pub settings_menu: SettingsMenu,
     pub players: Option<[Player; 2]>,
     pub ai_thinking: bool,
-    pub ai_timer: f32,
+    pub ai_delay: f32,
 	pub pick_color_menu: ColorMenu,
 	target_resolution: u16,
+    pub ai_start_time: Option<Instant>,
+    ai_result: Option<Receiver<(i32, i32)>>,
 }
 
 impl Game {
@@ -111,10 +116,12 @@ impl Game {
             new_game_menu: NewGameMenu::new(),
             players: None,
             ai_thinking: false,
-            ai_timer: 1.0,
+            ai_delay: 1.0,
 			settings_menu: SettingsMenu::new(),
 			pick_color_menu: ColorMenu::new(),
 			target_resolution: 1000,
+			ai_result: None,
+			ai_start_time: None,
         }
         // display window to pick game mode and variant
     }
@@ -128,7 +135,7 @@ impl Game {
         self.new_game_menu = NewGameMenu::new();
         self.players = None;
         self.ai_thinking = false;
-        self.ai_timer = 1.0;
+        self.ai_delay = 1.0;
 
         // display window to pick game mode and variant
     }
@@ -213,6 +220,7 @@ impl Game {
             self.board.draw_board();
             self.board.draw_counters(self);
             self.board.place_all_stones();
+			self.board.draw_ai_timer(self);
             self.draw_mouse_hover();
             event_handler(self).await;
             self.display_message();
@@ -248,7 +256,7 @@ impl Game {
             }
 
             if self.is_current_player_ai() && self.game_state == GameState::Playing {
-                self.ai_move().await;
+                self.update_ai().await;
             }
 			if self.target_resolution != screen_width() as u16 
 				|| self.target_resolution != screen_height() as u16 {
@@ -363,25 +371,58 @@ impl Game {
         }
     }
 
-    pub async fn ai_move(&mut self) {
-        if self.ai_thinking {
-            self.ai_timer -= get_frame_time();
-            if self.ai_timer <= 0. {
-				let start_time = std::time::Instant::now();
-                let current_color = self.get_current_player().unwrap().get_color();
+    // pub async fn ai_move(&mut self) {
+    //     if self.ai_thinking {
+    //         self.ai_delay -= get_frame_time();
+    //         if self.ai_delay <= 0. {
+	// 			let start_time = std::time::Instant::now();
+    //             let current_color = self.get_current_player().unwrap().get_color();
 
-                let (x, y) = ai_move_t(&mut self.board, current_color, self.game_variant);
+    //             let (x, y) = ai_move_t(&mut self.board, current_color, self.game_variant);
 
-                place_stone_handler(self, x, y).await;
-				println!("AI move took: {:?}", start_time.elapsed());
+    //             place_stone_handler(self, x, y).await;
+	// 			println!("AI move took: {:?}", start_time.elapsed());
 
-                self.ai_timer = 1.0;
-                self.ai_thinking = false;
-            }
-        } else {
-            self.ai_thinking = true;
-        }
-    }
+    //             self.ai_delay = 1.0;
+    //             self.ai_thinking = false;
+    //         }
+    //     } else {
+    //         self.ai_thinking = true;
+    //     }
+    // }
+
+	pub async fn update_ai(&mut self) {
+		if let Some(receiver) = &self.ai_result {
+			if let Ok((x, y)) = receiver.try_recv() {
+				place_stone_handler(self, x as usize, y as usize).await;
+				self.message = Some(Message::new(
+					format!("AI took {} ms to make a move", self.ai_start_time.unwrap().elapsed().as_millis()),
+					MessageType::Info,
+				));
+				self.ai_result = None;
+				self.ai_start_time = None;
+				self.ai_thinking = false;
+				self.ai_delay = 1.0;
+			}
+		} else if self.ai_thinking && self.ai_delay > 0. {
+			self.ai_delay -= get_frame_time();
+		}
+		else if self.ai_thinking && self.ai_delay <= 0. && self.ai_start_time.is_none() {
+			let (tx, rx) = mpsc::channel();
+			let mut board_clone = self.board.clone();
+			let current_color = self.get_current_player().unwrap().get_color();
+			let game_variant = self.game_variant;
+			self.ai_start_time = Some(Instant::now());
+			thread::spawn(move || {
+				let (x, y) = ai_move_t(&mut board_clone, current_color, game_variant);
+				tx.send((x as i32, y as i32)).unwrap();
+			});
+			self.ai_result = Some(rx);
+		}
+		else if !self.ai_thinking {
+			self.ai_thinking = true;
+		}
+	}
 
 	pub fn resize_window(&mut self, resolution: u16) {
 		request_new_screen_size(resolution as f32, resolution as f32);

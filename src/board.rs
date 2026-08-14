@@ -73,6 +73,7 @@ impl fmt::Display for NonEmptyCell {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Move {
     pub x: usize,
     pub y: usize,
@@ -91,6 +92,7 @@ impl fmt::Display for Move {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
@@ -247,6 +249,31 @@ impl Board {
             }
         }
     }
+
+	pub fn draw_ai_timer(&self, game: &Game) {
+		if game.game_mode == GameMode::HumanVsHuman || game.game_variant == GameVariant::None {
+			return;
+		}
+		let elapsed_time = if let Some(start_time) = game.ai_start_time {
+			start_time.elapsed().as_millis() as f32
+		} else {
+			0.0
+		};
+		let timer_text = format!("AI thinking: {:.3}ms", elapsed_time);
+		let text_dimensions = measure_text(&timer_text, None, scale_to_resolution(40., false) as u16, 1.);
+		draw_rectangle(screen_width() * 0.5 - text_dimensions.width / 2.,
+			scale_to_resolution(40., false), text_dimensions.width, text_dimensions.height, Color { r: 0., g: 0., b: 0., a: 0.5 });
+		draw_text(
+			&timer_text,
+			screen_width() * 0.5 - text_dimensions.width / 2.,
+			scale_to_resolution(50., false),
+			scale_to_resolution(40., false),
+			WHITE,
+		);
+		if game.ai_start_time.is_some() {
+			println!("AI thinking: {:.3}ms", elapsed_time);
+		}
+	}
 }
 
 impl fmt::Display for Board {
