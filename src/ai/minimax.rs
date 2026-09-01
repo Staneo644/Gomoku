@@ -1,4 +1,7 @@
-use crate::board::{Board, NonEmptyCell};
+use crate::{
+    board::{Board, NonEmptyCell},
+    game::GameVariant,
+};
 
 const CELLS_TO_CHECK: usize = 3;
 struct MoveWithScore {
@@ -15,6 +18,7 @@ fn minimax(
     depth: i32,
     is_maximizing: bool,
     cell: NonEmptyCell,
+    game_variant: GameVariant,
 ) -> MoveWithScore {
     if depth == 0 {
         return MoveWithScore {
@@ -38,7 +42,7 @@ fn minimax(
         if i >= CELLS_TO_CHECK {
             break;
         }
-        match board.set_and_check(x, y, cell) {
+        match board.set_and_check(x, y, cell, game_variant) {
             Err(_) => continue,
             Ok(true) => {
                 let _ = board.unset();
@@ -48,7 +52,7 @@ fn minimax(
                 };
             }
             Ok(false) => {
-                let current_move = minimax(board, depth - 1, !is_maximizing, cell);
+                let current_move = minimax(board, depth - 1, !is_maximizing, cell, game_variant);
                 if (is_maximizing && current_move.score > best_eval.score)
                     || (!is_maximizing && current_move.score < best_eval.score)
                 {
@@ -65,8 +69,12 @@ fn minimax(
     best_eval
 }
 
-pub fn ai_move_t(board: &mut Board, cell: NonEmptyCell) -> (usize, usize) {
-    let result = minimax(board, 10, true, cell).position;
+pub fn ai_move_t(
+    board: &mut Board,
+    cell: NonEmptyCell,
+    game_variant: GameVariant,
+) -> (usize, usize) {
+    let result = minimax(board, 10, true, cell, game_variant).position;
     println!("Best move: {:?}", result);
     result
 }

@@ -73,6 +73,7 @@ impl fmt::Display for NonEmptyCell {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Move {
     pub x: usize,
     pub y: usize,
@@ -91,6 +92,7 @@ impl fmt::Display for Move {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Board {
     pub(crate) grid: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     pub moves: Vec<Move>,
@@ -122,34 +124,30 @@ impl Board {
             a: (1.),
         });
 
-        draw_rectangle(
-            screen_width() * 0.075,
-            screen_height() * 0.075,
-            screen_width() * 0.85,
-            screen_height() * 0.85,
-            BEIGE,
-        );
+        let size = screen_width().min(screen_height());
+        let board_size = size * 0.8;
+        let board_start_x = (screen_width() - board_size) / 2.;
+        let board_start_y = (screen_height() - board_size) / 2.;
+        draw_rectangle(board_start_x, board_start_y, board_size, board_size, BEIGE);
         let line_thickness = 1.;
-        let first_height_line = screen_height() * 0.1;
+        let first_height_line = board_start_y + 0.05 * board_size;
         for i in 0..BOARD_SIZE {
             draw_line(
-                screen_width() * 0.1,
-                first_height_line
-                    + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
-                screen_width() * 0.9,
-                first_height_line
-                    + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
+                board_start_x + 0.05 * board_size,
+                first_height_line + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (i as f32),
+                board_start_x + 0.95 * board_size,
+                first_height_line + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (i as f32),
                 line_thickness,
                 DARKGRAY,
             );
         }
-        let first_width_line = screen_width() * 0.1;
+        let first_width_line = board_start_x + 0.05 * board_size;
         for i in 0..BOARD_SIZE {
             draw_line(
-                first_width_line + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
-                screen_height() * 0.1,
-                first_width_line + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
-                screen_height() * 0.9,
+                first_width_line + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (i as f32),
+                board_start_y + 0.05 * board_size,
+                first_width_line + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (i as f32),
+                board_start_y + board_size * 0.95,
                 line_thickness,
                 DARKGRAY,
             );
@@ -157,21 +155,15 @@ impl Board {
         for i in 0..BOARD_SIZE {
             for j in 0..BOARD_SIZE {
                 let ray;
-                let cell_size = if screen_width() > screen_height() {
-                    screen_height() * 0.8 / (BOARD_SIZE - 1) as f32
-                } else {
-                    screen_width() * 0.8 / (BOARD_SIZE - 1) as f32
-                };
+                let cell_size = board_size * 0.8 / 18.;
                 if (i + 3) % 6 == 0 && (j + 3) % 6 == 0 {
                     ray = cell_size * 0.1;
                 } else {
                     ray = cell_size * 0.05;
                 }
                 draw_circle(
-                    first_width_line
-                        + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
-                    first_height_line
-                        + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (j as f32),
+                    first_width_line + (board_size * 0.9 / (BOARD_SIZE - 1) as f32) * (i as f32),
+                    first_height_line + (board_size * 0.9 / (BOARD_SIZE - 1) as f32) * (j as f32),
                     ray,
                     DARKGRAY,
                 );
@@ -187,20 +179,38 @@ impl Board {
             WHITE
         };
         let x_position = if player_index == 0 {
-            screen_width() * 0.5 - scale_to_resolution(200.)
+            screen_width() * 0.5 - scale_to_resolution(200., true)
         } else {
-            screen_width() * 0.5 + scale_to_resolution(200.)
+            screen_width() * 0.5 + scale_to_resolution(200., true)
         };
-        let y_position = screen_height() * 0.025;
+        let y_position = scale_to_resolution(25., false);
         draw_circle(x_position, y_position, 20., color);
-        let text_dimensions = measure_text(&player.name, None, 20, 1.);
-        draw_text(&player.name, x_position + 40., y_position, 20., BLACK);
-        let captured_text = format!("Captured: {}", self.captured_by_user[player_index]);
+
+        let text_dimensions = measure_text(
+            &player.name,
+            None,
+            scale_to_resolution(20., false) as u16,
+            1.,
+        );
+        draw_text(
+            &player.name,
+            x_position + 40.,
+            y_position,
+            scale_to_resolution(20., false),
+            BLACK,
+        );
+
+        let capture_index = if player.get_color() == NonEmptyCell::Black {
+            0
+        } else {
+            1
+        };
+        let captured_text = format!("Captured: {}", self.captured_by_user[capture_index]);
         draw_text(
             &captured_text,
             x_position + 40.,
             y_position + text_dimensions.height,
-            20.,
+            scale_to_resolution(20., false),
             BLACK,
         );
     }
@@ -214,17 +224,17 @@ impl Board {
     }
 
     pub fn place_stone(&self, x: f32, y: f32, color: Color) {
-        let ray;
-        if screen_width() > screen_height() {
-            ray = screen_height() * 0.8 / (BOARD_SIZE - 1) as f32 / 2. - 2.;
-        } else {
-            ray = screen_width() * 0.8 / (BOARD_SIZE - 1) as f32 / 2. - 2.;
-        }
+        let size = screen_width().min(screen_height());
+        let board_size = size * 0.8;
+        let ray = board_size * 0.8 / (BOARD_SIZE - 1) as f32 / 2. - 2.;
+
         draw_circle(x, y, ray, color);
     }
 
     pub fn place_all_stones(&self) {
-        // unsafe {
+        let board_size = screen_width().min(screen_height()) * 0.8;
+        let line_x = screen_width() / 2. - board_size / 2. * 0.9;
+        let line_y = screen_height() / 2. - board_size / 2. * 0.9;
         for i in 0..BOARD_SIZE {
             for j in 0..BOARD_SIZE {
                 if self.grid[i][j] != Cell::Empty {
@@ -234,16 +244,53 @@ impl Board {
                         WHITE
                     };
                     self.place_stone(
-                        screen_width() * 0.1
-                            + ((screen_width() * 0.8) / (BOARD_SIZE - 1) as f32) * (i as f32),
-                        screen_height() * 0.1
-                            + ((screen_height() * 0.8) / (BOARD_SIZE - 1) as f32) * (j as f32),
+                        line_x + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (i as f32),
+                        line_y + ((board_size * 0.9) / (BOARD_SIZE - 1) as f32) * (j as f32),
                         color,
                     );
                 }
             }
         }
-        // }
+    }
+
+    pub fn draw_ai_timer(&self, game: &Game) {
+        if game.game_mode == GameMode::HumanVsHuman || game.game_variant == GameVariant::None {
+            return;
+        }
+        let elapsed_time = if let Some(start_time) = game.ai_start_time {
+            start_time.elapsed().as_millis() as f32
+        } else {
+            0.0
+        };
+        let timer_text = format!("AI thinking: {:.3}ms", elapsed_time);
+        let text_dimensions = measure_text(
+            &timer_text,
+            None,
+            scale_to_resolution(40., false) as u16,
+            1.,
+        );
+        draw_rectangle(
+            screen_width() * 0.5 - text_dimensions.width / 2.,
+            scale_to_resolution(40., false),
+            text_dimensions.width,
+            text_dimensions.height,
+            Color {
+                r: 0.,
+                g: 0.,
+                b: 0.,
+                a: 0.5,
+            },
+        );
+        draw_text(
+            &timer_text,
+            screen_width() * 0.5 - text_dimensions.width / 2.,
+            scale_to_resolution(50., false),
+            scale_to_resolution(40., false),
+            WHITE,
+        );
+        if game.ai_start_time.is_some() {
+            println!("AI thinking: {:.3}ms", elapsed_time);
+        }
     }
 }
 

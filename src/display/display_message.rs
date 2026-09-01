@@ -40,7 +40,7 @@ impl Message {
                 a: (0.8),
             }),
         };
-        let font_size = scale_to_resolution(30.);
+        let font_size = scale_to_resolution(30., false);
         let text_dimensions = measure_text(&self.text, None, font_size as u16, 0.8);
         let x = screen_width() * 0.99 - (text_dimensions.width * 1.5);
         let y = screen_height() * 0.05;

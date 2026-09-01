@@ -1,6 +1,6 @@
 pub mod ai;
 pub mod display;
-pub mod eventHandler;
+pub mod event_handler;
 pub mod board;
 pub mod board_move;
 pub mod directions;

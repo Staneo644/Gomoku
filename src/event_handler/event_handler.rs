@@ -4,14 +4,14 @@ use crate::menu::menu::MenuAction;
 use macroquad::prelude::*;
 
 async fn get_board_coordinates(x: &mut f32, y: &mut f32) -> (usize, usize) {
-    let line_x = screen_width() * 0.1;
-    let line_y = screen_height() * 0.1;
-    let cell_size_x = screen_width() * 0.8 / 18.;
-    let cell_size_y = screen_height() * 0.8 / 18.;
-    let board_x = ((*x - line_x) / cell_size_x + 0.5).floor() as usize;
-    let board_y = ((*y - line_y) / cell_size_y + 0.5).floor() as usize;
-    *x = line_x + (board_x as f32) * cell_size_x + cell_size_x;
-    *y = line_y + (board_y as f32) * cell_size_y + cell_size_y;
+    let board_size = screen_width().min(screen_height()) * 0.8;
+    let line_x = screen_width() / 2. - board_size / 2. * 0.9;
+    let line_y = screen_height() / 2. - board_size / 2. * 0.9;
+    let cell_size = board_size * 0.9 / 18.;
+    let board_x = ((*x - line_x) / cell_size + 0.5).floor() as usize;
+    let board_y = ((*y - line_y) / cell_size + 0.5).floor() as usize;
+    *x = line_x + (board_x as f32) * cell_size + cell_size;
+    *y = line_y + (board_y as f32) * cell_size + cell_size;
     (board_x, board_y)
 }
 
@@ -21,6 +21,11 @@ pub fn menu_event_handler(game: &mut Game) {
             game.menu.click()
         } else if GameState::NewGameMenu == game.game_state {
             game.new_game_menu.click()
+        } else if GameState::SettingsMenu == game.game_state {
+            game.settings_menu.click()
+        } else if GameState::PickColor == game.game_state && !game.is_current_player_ai() {
+            game.pick_color_menu
+                .click(game.game_variant == GameVariant::Swap2)
         } else {
             return;
         };
@@ -29,6 +34,8 @@ pub fn menu_event_handler(game: &mut Game) {
                 MenuAction::ChangeState(game_state) => game.set_game_state(game_state),
                 MenuAction::SetGameMode(game_mode) => game.game_mode = game_mode,
                 MenuAction::SetGameVariant(game_variant) => game.game_variant = game_variant,
+                MenuAction::PickColor(player_color) => game.change_players_colors(player_color),
+                MenuAction::ResizeWindow(resolution) => game.resize_window(resolution),
             },
             None => {}
         }
@@ -48,6 +55,7 @@ pub async fn place_stone_handler(game: &mut Game, board_x: usize, board_y: usize
         board_x,
         board_y,
         game.players.as_ref().unwrap()[game.current_player].get_color(),
+        game.game_variant,
     ) {
         Ok(true) => {
             game.game_state = GameState::Finished;
@@ -69,10 +77,11 @@ pub async fn mouse_play_event_handler(game: &mut Game) {
     }
     if is_mouse_button_released(MouseButton::Left) {
         let (mut x, mut y) = mouse_position();
-        if x < screen_width() * 0.075
-            || x > screen_width() * 0.925
-            || y < screen_height() * 0.075
-            || y > screen_height() * 0.925
+        let board_size = screen_width().min(screen_height()) * 0.8;
+        if x < screen_width() / 2. - board_size / 2. * 0.95
+            || x > screen_width() / 2. + board_size / 2. * 0.95
+            || y < screen_height() / 2. - board_size / 2. * 0.95
+            || y > screen_height() / 2. + board_size / 2. * 0.95
         {
             game.message = Some(Message::new(
                 "Click inside the board".to_string(),
@@ -101,6 +110,12 @@ pub async fn event_handler(game: &mut Game) {
             }
         } else if game.game_state == GameState::NewGameMenu {
             game.game_state = GameState::MainMenu;
+        } else if game.game_state == GameState::PickColor {
+            game.message = Some(Message::new(
+                "Please select a color".to_string(),
+                MessageType::Error,
+            ));
+            return;
         } else {
             game.game_state = GameState::MainMenu;
         }
