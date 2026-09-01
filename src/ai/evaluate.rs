@@ -1,6 +1,7 @@
 use super::scoring::{self, CAPTURE_THREAT, SCORING_TABLE, capture_score};
 use crate::{
     board::{BOARD_SIZE, Board, Cell, NonEmptyCell},
+    board_move::valid_move,
     directions::PRIMARY_DIRECTIONS,
 };
 
@@ -21,7 +22,7 @@ pub fn count_direction_evaluate(
     let y_1 = y as i32 - dy;
     let mut cell_start: Cell = cell;
 
-    if x_1 < BOARD_SIZE as i32 && y_1 < BOARD_SIZE as i32 && x_1 >= 0 && y_1 >= 0 {
+    if valid_move(x_1, y_1) {
         if grid[x_1 as usize][y_1 as usize] == cell {
             return 0;
         }
@@ -33,7 +34,7 @@ pub fn count_direction_evaluate(
 
     let mut x = x as i32 + dx;
     let mut y = y as i32 + dy;
-    while x < BOARD_SIZE as i32 && y < BOARD_SIZE as i32 && x >= 0 && y >= 0 {
+    while valid_move(x, y) {
         if grid[x as usize][y as usize] == cell {
             count += 1;
         } else {

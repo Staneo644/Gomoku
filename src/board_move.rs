@@ -51,65 +51,12 @@ impl Board {
 }
 
 impl Board {
-    pub fn check_secure(&self, x: i32, y: i32, cell: Cell, opposite_cell: Cell) -> bool {
-        for (dx, dy) in ALL_DIRECTIONS {
-            let x1 = x + dx;
-            let y1 = y + dy;
-            let x2 = x + 2 * dx;
-            let y2 = y + 2 * dy;
-            let x_1 = x - dx;
-            let y_1 = y - dy;
-            if x2 >= 0
-                && x2 < BOARD_SIZE as i32
-                && y2 >= 0
-                && y2 < BOARD_SIZE as i32
-                && x_1 >= 0
-                && x_1 < BOARD_SIZE as i32
-                && y_1 >= 0
-                && y_1 < BOARD_SIZE as i32
-                && self.grid[(x1) as usize][(y1) as usize] == cell
-            {
-                match self.grid[(x2) as usize][(y2) as usize] {
-                    Cell::Empty => {
-                        if self.grid[(x_1) as usize][(y_1) as usize] == opposite_cell {
-                            return false;
-                        }
-                    }
-                    other => {
-                        if other == opposite_cell
-                            && self.grid[(x_1) as usize][(y_1) as usize] == Cell::Empty
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        true
-    }
-}
-
-impl Board {
-    fn count_direction(
-        &self,
-        x: i32,
-        y: i32,
-        dx: i32,
-        dy: i32,
-        cell: Cell,
-        opposite_cell: Cell,
-    ) -> i32 {
+    fn count_direction(&self, x: i32, y: i32, dx: i32, dy: i32, cell: Cell) -> i32 {
         let mut count = 0;
         let mut nx = x + dx;
         let mut ny = y + dy;
 
-        while nx >= 0
-            && nx < BOARD_SIZE as i32
-            && ny >= 0
-            && ny < BOARD_SIZE as i32
-            && self.grid[nx as usize][ny as usize] == cell
-            && self.check_secure(nx, ny, cell, opposite_cell)
-        {
+        while valid_move(nx, ny) && self.grid[nx as usize][ny as usize] == cell {
             count += 1;
             nx += dx;
             ny += dy;
@@ -197,10 +144,7 @@ impl Board {
         let cell = cell.get();
 
         for (dx, dy) in ALL_DIRECTIONS {
-            if (x + 3 * dx) >= 0
-                && (x + 3 * dx) < BOARD_SIZE as i32
-                && (y + 3 * dy) >= 0
-                && (y + 3 * dy) < BOARD_SIZE as i32
+            if valid_move(x + 3 * dx, y + 3 * dy)
                 && (self.grid[(x + dx) as usize][(y + dy) as usize] == opposite_cell)
                 && (self.grid[(x + 2 * dx) as usize][(y + 2 * dy) as usize] == opposite_cell)
                 && (self.grid[(x + 3 * dx) as usize][(y + 3 * dy) as usize] == cell)
@@ -234,7 +178,7 @@ impl Board {
         lst_tab: &mut SmallVec<[u8; 4]>,
     ) {
         let mut j = 0;
-        if *nx >= 0 && *nx < BOARD_SIZE as i32 && *ny >= 0 && *ny < BOARD_SIZE as i32 {
+        if valid_move(*nx, *ny) {
             while j < lst_tab.len() {
                 let expected = DOUBLE_THREE_TAB[lst_tab[j] as usize][*i as usize];
                 if expected != 8 {
@@ -272,15 +216,7 @@ impl Board {
         let x_1 = x as i32 - dx;
         let y_1 = y as i32 - dy;
 
-        if x1 >= 0
-            && x1 < BOARD_SIZE as i32
-            && y1 >= 0
-            && y1 < BOARD_SIZE as i32
-            && x_1 >= 0
-            && x_1 < BOARD_SIZE as i32
-            && y_1 >= 0
-            && y_1 < BOARD_SIZE as i32
-        {
+        if valid_move(x1, y1) && valid_move(x_1, y_1) {
             match self.grid[x1 as usize][y1 as usize] {
                 Cell::Empty => match self.grid[x_1 as usize][y_1 as usize] {
                     Cell::Empty => lst_tab.extend([2, 9]),
@@ -367,7 +303,6 @@ impl Board {
     pub fn check(&self, x: usize, y: usize, cell: NonEmptyCell) -> bool {
         let x = x as i32;
         let y = y as i32;
-        let opposite_cell = cell.get_opposite();
 
         if self.captured_by_user[cell as usize] >= 10 {
             println!("Player {} wins by capture!", cell);
@@ -379,8 +314,8 @@ impl Board {
 
         for (dx, dy) in PRIMARY_DIRECTIONS {
             let count = 1
-                + self.count_direction(x, y, dx, dy, cell, opposite_cell)
-                + self.count_direction(x, y, -dx, -dy, cell, opposite_cell);
+                + self.count_direction(x, y, dx, dy, cell)
+                + self.count_direction(x, y, -dx, -dy, cell);
 
             if count >= 5 {
                 return true;
