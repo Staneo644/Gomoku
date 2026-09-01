@@ -7,8 +7,8 @@ use std::fmt;
 #[derive(Debug)]
 pub enum BoardError {
     InvalidMove,
-	InvalidFirstMovePro,
-	InvalidSecondMovePro,
+    InvalidFirstMovePro,
+    InvalidSecondMovePro,
     OccupiedCell,
     FreeThree,
     BoardEmpty,
@@ -21,8 +21,14 @@ impl fmt::Display for BoardError {
             BoardError::OccupiedCell => write!(f, "Cell is occupied"),
             BoardError::FreeThree => write!(f, "Move creates a free three"),
             BoardError::BoardEmpty => write!(f, "Board is empty"),
-            BoardError::InvalidFirstMovePro => write!(f, "Invalid move for Pro variant, 1st move must be at the center of the board"),
-            BoardError::InvalidSecondMovePro => write!(f, "Invalid move for Pro variant, 2nd move must be 3 spaces from the center of the board"),
+            BoardError::InvalidFirstMovePro => write!(
+                f,
+                "Invalid move for Pro variant, 1st move must be at the center of the board"
+            ),
+            BoardError::InvalidSecondMovePro => write!(
+                f,
+                "Invalid move for Pro variant, 2nd move must be 3 spaces from the center of the board"
+            ),
         }
     }
 }
@@ -338,17 +344,24 @@ impl Board {
 }
 
 impl Board {
-    pub fn set(&mut self, x: usize, y: usize, cell: NonEmptyCell, game_variant: GameVariant) -> Result<(), BoardError> {
+    pub fn set(
+        &mut self,
+        x: usize,
+        y: usize,
+        cell: NonEmptyCell,
+        game_variant: GameVariant,
+    ) -> Result<(), BoardError> {
         let new_cell = cell.get();
         if x >= BOARD_SIZE || y >= BOARD_SIZE {
             return Err(BoardError::InvalidMove);
+        } else if x != 9 && y != 9 && game_variant == GameVariant::Pro && self.moves.len() == 0 {
+            return Err(BoardError::InvalidFirstMovePro);
+        } else if (((x - 9) as i32).abs() < 3 && ((y - 9) as i32).abs() < 3)
+            && game_variant == GameVariant::Pro
+            && self.moves.len() == 2
+        {
+            return Err(BoardError::InvalidSecondMovePro);
         }
-		else if x != 9 && y != 9 && game_variant == GameVariant::Pro && self.moves.len() == 0 {
-			return Err(BoardError::InvalidFirstMovePro);
-		}
-		else if (((x - 9) as i32).abs() < 3 && ((y - 9) as i32).abs() < 3) && game_variant == GameVariant::Pro && self.moves.len() == 2 {
-			return Err(BoardError::InvalidSecondMovePro);
-		}
 
         if self.grid[x][y] == Cell::Empty {
             if self.free_trees(x, y, new_cell) {
@@ -406,7 +419,7 @@ impl Board {
         x: usize,
         y: usize,
         cell: NonEmptyCell,
-		game_variant: GameVariant
+        game_variant: GameVariant,
     ) -> Result<bool, BoardError> {
         match self.set(x, y, cell, game_variant) {
             Ok(()) => Ok(self.check(x, y, cell)),

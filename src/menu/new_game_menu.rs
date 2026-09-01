@@ -1,6 +1,7 @@
 use crate::game::{GameMode, GameVariant};
 use crate::menu::menu::{
-    Button, MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption, OPTION_HEIGHT, OPTION_WIDTH,
+    Button, MENU_HEIGHT, MENU_START_POINT, MENU_WIDTH, MenuAction, MenuOption, OPTION_HEIGHT,
+    OPTION_WIDTH,
 };
 pub const MODE_OPTIONS: [&str; 2] = ["HUMAN VS HUMAN", "HUMAN VS AI"];
 pub const VARIANT_OPTIONS: [&str; 4] = ["STANDARD", "SWAP2", "SINGLE SWAP", "PRO"];
@@ -77,7 +78,12 @@ impl NewGameMenu {
             scale_to_resolution(MENU_START_POINT.x, true),
             scale_to_resolution(MENU_START_POINT.y * 0.66, false),
         );
-        let text_dimensions = measure_text("NEW GAME", None, scale_to_resolution(40., false) as u16, 0.8);
+        let text_dimensions = measure_text(
+            "NEW GAME",
+            None,
+            scale_to_resolution(40., false) as u16,
+            0.8,
+        );
 
         draw_rectangle(
             0.,

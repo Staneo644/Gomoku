@@ -14,7 +14,7 @@ use macroquad::prelude::*;
 fn window_conf() -> Conf {
     Conf {
         window_resizable: true,
-		fullscreen: true,
+        fullscreen: true,
         window_title: String::from("Gomoku"),
         ..Default::default()
     }
