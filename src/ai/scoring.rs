@@ -12,7 +12,7 @@ pub const OPEN_TWO: i32 = 10;
 pub const HALF_OPEN_TWO: i32 = 5;
 pub const CLOSED_TWO: i32 = 1;
 
-pub const CAPTURE_THREAT: i32 = 10000;
+pub const CAPTURE_THREAT: i32 = 100000;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum ScoringState {

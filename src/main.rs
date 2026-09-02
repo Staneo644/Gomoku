@@ -7,9 +7,11 @@ mod event_handler;
 mod game;
 mod menu;
 mod player;
+mod test;
 mod utils;
-// mod menu;
+
 use macroquad::prelude::*;
+use std::env;
 
 fn window_conf() -> Conf {
     Conf {
@@ -22,6 +24,11 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut game = game::Game::new();
-    game.launch().await;
+    let args: Vec<String> = env::args().collect();
+    if args.contains(&String::from("--test")) {
+        _ = test::launch();
+    } else {
+        let mut game = game::Game::new();
+        game.launch().await;
+    }
 }

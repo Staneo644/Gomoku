@@ -173,6 +173,27 @@ pub fn valid_move(x: i32, y: i32) -> bool {
     x >= 0 && x < BOARD_SIZE as i32 && y >= 0 && y < BOARD_SIZE as i32
 }
 
+#[inline(always)]
+pub fn get_cell_usize(grid: &[[Cell; BOARD_SIZE]; BOARD_SIZE], x: usize, y: usize) -> Cell {
+    if x >= BOARD_SIZE || y >= BOARD_SIZE {
+        return Cell::Invalid;
+    }
+    grid[x][y]
+}
+
+#[inline(always)]
+pub fn get_cell_i32(grid: &[[Cell; BOARD_SIZE]; BOARD_SIZE], x: i32, y: i32) -> Cell {
+    if x < 0 || y < 0 || x >= BOARD_SIZE as i32 || y >= BOARD_SIZE as i32 {
+        return Cell::Invalid;
+    }
+    grid[x as usize][y as usize]
+}
+
+pub fn is_used(grid: &[[Cell; BOARD_SIZE]; BOARD_SIZE], x: i32, y: i32) -> bool {
+    let cell = get_cell_i32(grid, x, y);
+    cell != Cell::Empty && cell != Cell::Invalid
+}
+
 impl Board {
     #[inline(always)]
     fn match_cell(cell: Cell, curent_cell: Cell, expected: u8) -> bool {
@@ -320,6 +341,18 @@ impl Board {
             return Ok(());
         }
         return Err(BoardError::OccupiedCell);
+    }
+}
+
+impl Board {
+    pub fn set_no_cell(&mut self, x: usize, y: usize) -> Result<(), BoardError> {
+        let mut cell: NonEmptyCell;
+        if self.moves.len() == 0 {
+            cell = NonEmptyCell::Black;
+        } else {
+            cell = self.moves.last().unwrap().cell.get_opposite_non_empty();
+        }
+        self.set(x, y, cell, GameVariant::Standard)
     }
 }
 

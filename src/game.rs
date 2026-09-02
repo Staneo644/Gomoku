@@ -63,7 +63,6 @@ pub enum GameState {
     Finished,
     Exiting,
     PickColor,
-    Swap1,
     Swap2,
 }
 
@@ -78,7 +77,6 @@ impl fmt::Display for GameState {
             GameState::Finished => write!(f, "Finished"),
             GameState::Exiting => write!(f, "Exiting"),
             GameState::PickColor => write!(f, "PickColor"),
-            GameState::Swap1 => write!(f, "Swap1"),
             GameState::Swap2 => write!(f, "Swap2"),
         }
     }

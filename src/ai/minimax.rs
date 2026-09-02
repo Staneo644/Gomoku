@@ -4,6 +4,7 @@ use crate::{
 };
 
 const CELLS_TO_CHECK: usize = 3;
+const MAX_DEPTH: i32 = 10;
 struct MoveWithScore {
     position: (usize, usize),
     score: i32,
@@ -32,11 +33,9 @@ fn minimax(
         score: if is_maximizing { i32::MIN } else { i32::MAX },
     };
     let best_move = board.move_ordering(cell);
-    // let best_opposite_move = board.move_ordering(cell.get_opposite_non_empty());
     let mut i = 0;
-    if depth == 10 {
+    if depth == MAX_DEPTH {
         println!("Best move: {:?}", best_move);
-        // println!("Best opposite move: {:?}", best_opposite_move);
     }
     for (x, y, _) in best_move {
         if i >= CELLS_TO_CHECK {
@@ -74,7 +73,7 @@ pub fn ai_move_t(
     cell: NonEmptyCell,
     game_variant: GameVariant,
 ) -> (usize, usize) {
-    let result = minimax(board, 10, true, cell, game_variant).position;
+    let result = minimax(board, MAX_DEPTH, true, cell, game_variant).position;
     println!("Best move: {:?}", result);
     result
 }

@@ -1,4 +1,3 @@
-use crate::game::{GameMode, GameVariant};
 use crate::{
     game::GameState,
     menu::menu::{

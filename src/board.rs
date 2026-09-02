@@ -11,6 +11,7 @@ pub enum Cell {
     Empty,
     Black,
     White,
+    Invalid,
 }
 
 impl fmt::Display for Cell {
@@ -19,6 +20,7 @@ impl fmt::Display for Cell {
             Cell::Empty => write!(f, " "),
             Cell::White => write!(f, "0"),
             Cell::Black => write!(f, "X"),
+            Cell::Invalid => write!(f, ""),
         }
     }
 }
@@ -29,6 +31,7 @@ impl Cell {
             Cell::Empty => Cell::Empty,
             Cell::Black => Cell::White,
             Cell::White => Cell::Black,
+            Cell::Invalid => Cell::Invalid,
         }
     }
 }
